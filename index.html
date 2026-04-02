@@ -1,202 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart HUD</title>
+    <title>Smart Radar</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
-        
-        :root {
-            --bg: #09090b;
-            --surface: rgba(255,255,255,0.03);
-            --border: rgba(255,255,255,0.08);
-            --accent: #38bdf8;
-            --accent-glow: rgba(56, 189, 248, 0.4);
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        html, body {
-            width: 100%;
-            height: 100%;
+        body {
+            background-color: #09090b;
+            color: #f8fafc;
+            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
-            zoom: 1.4; /* <--- MAGIC ZOOM BUTTON! Change this to 1.5, 2.0 etc */
-            background-color: var(--bg);
-            color: var(--text-main);
-            font-family: 'Outfit', sans-serif;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            /* Subtle animated background */
-            background: radial-gradient(circle at top right, #1e293b, #09090b);
+            padding: 20px 0;
+            zoom: 1.4;
         }
 
-        /* Header */
+        .container {
+            transform: scaleY(1.5);
+        }
+
+        body {
+            padding: 130px 0;
+        }
+
+        /* Header (Uses float instead of flex) */
         .header {
-            padding: 30px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            background: rgba(9, 9, 11, 0.6);
-            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #333;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            overflow: hidden;
         }
-        .header h1 {
+
+        h1 {
+            color: #38bdf8;
             font-size: 34px;
-            font-weight: 600;
-            color: var(--accent);
-            text-shadow: 0 0 10px var(--accent-glow);
-            letter-spacing: 2px;
+            margin: 0;
+            float: left;
         }
+
         .status {
-            font-size: 20px;
+            float: right;
             color: #4ade80;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 600;
-        }
-        .status::before {
-            content: '';
-            width: 12px;
-            height: 12px;
-            background: #4ade80;
-            border-radius: 50%;
-            box-shadow: 0 0 8px #4ade80;
-        }
-
-        /* Content list */
-        .content {
-            flex: 1;
-            padding: 30px 40px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        /* Scrollbar styling */
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-
-        /* Glassmorphic Item Card */
-        .item-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .item-card:hover {
-            background: rgba(255,255,255,0.06);
-            border-color: var(--accent);
-            transform: translateY(-4px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.5);
-        }
-
-        .avatar-info {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        .avatar-img {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: #1e293b;
-            border: 2px solid var(--border);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: 600;
-            color: var(--text-dim);
-            font-size: 26px;
-        }
-        
-        .name { font-size: 28px; font-weight: 600; }
-        .distance { font-size: 20px; color: var(--accent); margin-top: 6px; }
-
-        /* Actions */
-        .actions-btn {
-            background: rgba(56, 189, 248, 0.1);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-            border-radius: 12px;
-            padding: 12px 24px;
             font-size: 20px;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .actions-btn:hover {
-            background: var(--accent);
-            color: #000;
-            box-shadow: 0 0 20px var(--accent-glow);
+            font-weight: bold;
+            margin-top: 10px;
         }
 
+        /* Item Card (Uses float instead of flex) */
+        .item-card {
+            background: #1e1e24;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .avatar-img {
+            float: left;
+            width: 60px;
+            height: 60px;
+            background: #2a2a35;
+            border-radius: 30px;
+            text-align: center;
+            line-height: 60px;
+            font-size: 26px;
+            font-weight: bold;
+            color: #888;
+            margin-right: 20px;
+        }
+
+        .user-info {
+            float: left;
+            margin-top: 2px;
+        }
+
+        .name {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .distance {
+            font-size: 20px;
+            color: #38bdf8;
+            margin-top: 5px;
+        }
+
+        .actions-btn {
+            float: right;
+            background: transparent;
+            color: #38bdf8;
+            border: 1px solid #38bdf8;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 20px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
     </style>
 </head>
+
 <body>
-    <div class="header">
-        <h1>SMART RADAR</h1>
-        <div class="status">Online</div>
-    </div>
-    <div class="content" id="radarList">
-        <!-- Demo Users -->
-        <div class="item-card">
-            <div class="avatar-info">
+    <div class="container">
+
+        <div class="header">
+            <h1>SMART RADAR</h1>
+            <div class="status">● Online</div>
+        </div>
+
+        <div id="radarList">
+            <!-- Demo Users -->
+            <div class="item-card">
                 <div class="avatar-img">A</div>
-                <div>
+                <div class="user-info">
                     <div class="name">Alice Resident</div>
                     <div class="distance">15m away</div>
                 </div>
+                <button class="actions-btn">Profile</button>
             </div>
-            <button class="actions-btn">Profile</button>
-        </div>
-        
-        <div class="item-card">
-            <div class="avatar-info">
+
+            <div class="item-card">
                 <div class="avatar-img">B</div>
-                <div>
+                <div class="user-info">
                     <div class="name">Bob Resident</div>
                     <div class="distance">22m away</div>
                 </div>
+                <button class="actions-btn">Profile</button>
             </div>
-            <button class="actions-btn">Profile</button>
-        </div>
 
-        <div class="item-card" style="opacity: 0.6;">
-            <div class="avatar-info">
+            <div class="item-card" style="opacity: 0.6;">
                 <div class="avatar-img">C</div>
-                <div>
+                <div class="user-info">
                     <div class="name">Charlie Resident</div>
                     <div class="distance">45m away</div>
                 </div>
+                <button class="actions-btn">Profile</button>
             </div>
-            <button class="actions-btn">Profile</button>
         </div>
+
     </div>
-    
-    <script>
-        // Simple micro-animation on load for a dynamic, alive feel
-        document.querySelectorAll('.item-card').forEach((el, index) => {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(10px)';
-            setTimeout(() => {
-                el.style.transition = 'all 0.4s ease';
-                el.style.opacity = '1';
-                el.style.transform = 'translateY(0)';
-            }, 150 * index + 100);
-        });
-    </script>
 </body>
+
 </html>
