@@ -220,7 +220,7 @@
 
         async function checkStatus() {
             try {
-                const response = await fetch(`${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}`);
+                const response = await fetch(`${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}&name=${encodeURIComponent(userName)}`);
                 const result = await response.json();
                 if (result.status === "success") renderData(result.data, result.server_time); else showView('welcomeView');
             } catch (err) { console.error(err); }
