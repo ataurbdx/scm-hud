@@ -4,122 +4,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Radar</title>
+    <title>SCM HUD</title>
     <style>
+        /* BASE THEME & SL RENDERING HACKS */
         body {
             background-color: #09090b;
             color: #f8fafc;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
-            padding: 20px 0;
+            padding: 250px 0; /* Padding for SL physical stretch */
             zoom: 1.4;
         }
 
         .container {
-            transform: scaleY(2);
+            transform: scaleY(2); /* Scaling for SL physical stretch */
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
 
-        body {
-            padding: 250px 0;
-        }
-
-        /* Header (Uses float instead of flex) */
-        .header {
-            border-bottom: 1px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
+        /* NAVIGATION TABS */
+        .nav-tabs {
+            border-bottom: 2px solid #27272a;
+            margin-bottom: 25px;
             overflow: hidden;
+            display: none; /* Hidden during setup */
         }
 
-        h1 {
-            color: #38bdf8;
-            font-size: 34px;
-            margin: 0;
+        .tab-btn {
             float: left;
-        }
-
-        .status {
-            float: right;
-            color: #4ade80;
+            background: transparent;
+            border: none;
+            color: #71717a;
+            padding: 15px 25px;
             font-size: 20px;
-            font-weight: bold;
-            margin-top: 10px;
-            margin-right: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
         }
 
-        /* Item Card (Uses float instead of flex) */
-        .item-card {
-            background: #1e1e24;
-            border: 1px solid #333;
-            border-radius: 10px;
+        .tab-btn.active {
+            color: #38bdf8;
+            border-bottom-color: #38bdf8;
+        }
+
+        /* VIEWS */
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* LOADING SCREEN */
+        #loadingView {
+            text-align: center;
+            padding-top: 100px;
+            font-size: 24px;
+            color: #71717a;
+        }
+
+        /* WELCOME / SETUP VIEW */
+        .welcome-header { text-align: center; margin-bottom: 40px; }
+        .welcome-header h1 { color: #38bdf8; font-size: 48px; margin-bottom: 10px; }
+        .instruction-box {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            padding: 25px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .step { margin-bottom: 15px; font-size: 18px; }
+        .step-num { 
+            display: inline-block; 
+            width: 30px; height: 30px; 
+            background: #38bdf8; color: #000; 
+            border-radius: 50%; text-align: center; 
+            line-height: 30px; margin-right: 10px; 
+            font-weight: bold;
+        }
+
+        /* UI COMPONENTS */
+        .card {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
             overflow: hidden;
         }
 
-        .avatar-img {
-            float: left;
-            width: 60px;
-            height: 60px;
-            background: #2a2a35;
-            border-radius: 30px;
-            text-align: center;
-            line-height: 60px;
-            font-size: 26px;
-            font-weight: bold;
-            color: #888;
-            margin-right: 20px;
-        }
-
-        .user-info {
-            float: left;
-            margin-top: 2px;
-        }
-
-        .name {
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .distance {
-            font-size: 20px;
-            color: #38bdf8;
-            margin-top: 5px;
-        }
-
-        .actions-btn {
-            background: transparent;
-            color: #38bdf8;
-            border: 1px solid #38bdf8;
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-size: 20px;
-            cursor: pointer;
-        }
-
-        .btn-float-right {
-            float: right;
-            margin-top: 10px;
-        }
-        
-        .btn-full {
-            float: none;
-            width: 100%;
-            display: block;
-            margin-top: 15px;
-            text-align: center;
-        }
-
+        .input-group { margin-bottom: 20px; }
         input[type="text"] {
-            width: 100%; 
-            box-sizing: border-box; 
-            background: #2a2a35; 
-            border: 1px solid #444; 
-            color: #fff; 
-            padding: 15px; 
-            font-size: 18px; 
-            border-radius: 8px; 
-            margin-bottom: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            background: #09090b;
+            border: 1px solid #27272a;
+            color: #fff;
+            padding: 20px;
+            font-size: 20px;
+            border-radius: 8px;
+            outline: none;
+        }
+        input:focus { border-color: #38bdf8; }
+
+        .btn {
+            background: #38bdf8;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .status-msg { margin-top: 15px; text-align: center; font-size: 18px; }
+
+        /* LIST ITEMS */
+        .item {
+            border-bottom: 1px solid #27272a;
+            padding: 15px 0;
+            overflow: hidden;
+        }
+        .item:last-child { border-bottom: none; }
+        .item-info { float: left; }
+        .item-name { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+        .item-meta { color: #71717a; font-size: 18px; }
+        .item-action { float: right; margin-top: 5px; }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 16px;
         }
     </style>
 </head>
@@ -127,124 +147,175 @@
 <body>
     <div class="container">
 
-        <!-- HEADER AREA -->
-        <div class="header">
-            <h1>SMART RADAR</h1>
-            <button id="settingsBtn" class="actions-btn" style="float: right; margin-top: 0; padding: 7px 15px;">⚙️ Setup</button>
-            <div id="topStatus" class="status">● Offline</div>
+        <!-- NAVIGATION (Visible only when logged in) -->
+        <div id="mainNav" class="nav-tabs">
+            <button class="tab-btn active" onclick="showTab('nearby')">Nearby</button>
+            <button class="tab-btn" onclick="showTab('contacts')">Contacts</button>
+            <button class="tab-btn" onclick="showTab('settings')">Settings</button>
         </div>
 
-        <!-- VIEW: RADAR LIST -->
-        <div id="radarView">
-            <div class="item-card">
-                <div class="avatar-img">D</div>
-                <div class="user-info">
-                    <div class="name">Doctor Resident (dr22)</div>
-                    <div class="distance">Loading cloud data...</div>
-                </div>
-                <button class="actions-btn btn-float-right">Profile</button>
+        <!-- VIEW: LOADING -->
+        <div id="loadingView" class="view active">
+            Connecting to SCM Cloud...
+        </div>
+
+        <!-- VIEW: WELCOME / SETUP -->
+        <div id="welcomeView" class="view">
+            <div class="welcome-header">
+                <h1>Welcome to SCM</h1>
+                <p style="color: #71717a; font-size: 20px;">Ready to manage your Second Life contacts?</p>
             </div>
-        </div>
 
-        <!-- VIEW: SETTINGS / REGISTRATION -->
-        <div id="settingsView" style="display: none;">
-            <div class="item-card">
-                <div class="name" style="margin-bottom: 10px; color: #38bdf8;">Database Connection</div>
-                <div style="font-size: 18px; color: #aaa; margin-bottom: 20px; line-height: 1.4;">
-                    Paste your personal Google Sheet link below to connect this HUD to your Cloud CRM Database.
-                </div>
-                
+            <div class="instruction-box">
+                <div class="step"><span class="step-num">1</span> Create a blank Google Sheet.</div>
+                <div class="step"><span class="step-num">2</span> Click <b>Share</b> and add your service email.</div>
+                <div class="step"><span class="step-num">3</span> Paste the Sheet URL below.</div>
+            </div>
+
+            <div class="input-group">
                 <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/...">
-                <button id="registerBtn" class="actions-btn btn-full" style="background: #38bdf8; color: #09090b; font-weight: bold; border: none;">Connect Database</button>
-                <div id="registerMsg" style="margin-top: 15px; font-size: 18px; color: #4ade80; text-align: center;"></div>
             </div>
-            
-            <button id="backBtn" class="actions-btn btn-full" style="color: #888; border-color: #444;">← Back to Radar</button>
+            <button id="registerBtn" class="btn" onclick="handleRegister()">Connect Database</button>
+            <div id="setupStatus" class="status-msg"></div>
+        </div>
+
+        <!-- VIEW: DASHBOARD (NEARBY TAB) -->
+        <div id="nearbyTab" class="view dashboard-tab">
+            <div class="card">
+                <div id="radarList">
+                    <div class="item">
+                        <div class="item-info">
+                            <div class="item-name">Scanning...</div>
+                            <div class="item-meta">Waiting for radar update</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: DASHBOARD (CONTACTS TAB) -->
+        <div id="contactsTab" class="view dashboard-tab">
+            <div class="card">
+                <div id="contactsList">
+                    <p style="color: #71717a; text-align: center;">No saved contacts yet.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: DASHBOARD (SETTINGS TAB) -->
+        <div id="settingsTab" class="view dashboard-tab">
+            <div class="card">
+                <h2 style="margin-top: 0; color: #38bdf8;">HUD Settings</h2>
+                <div class="item">
+                    <div class="item-info">
+                        <div class="item-name">Database URL</div>
+                        <div class="item-meta" id="displaySheetId">Connected</div>
+                    </div>
+                    <div class="item-action">
+                        <button class="btn-outline" onclick="showView('welcomeView')">Change</button>
+                    </div>
+                </div>
+                <div class="item">
+                    <p style="color: #71717a;">Categories, Tags, and Theme settings coming soon!</p>
+                </div>
+            </div>
         </div>
 
     </div>
 
-    <!-- MAIN LOGIC -->
     <script>
-        // ==========================================
-        // 1. IMPORTANT: PASTE YOUR APP SCRIPT URL HERE
-        // ==========================================
         const MASTER_ENGINE_URL = "https://script.google.com/macros/s/AKfycbxmP0JWumHog423X-Dq8ZIEYtDoJagl2YCOAd1Lse2I4tyX8mzl2mytkI8Z9uj37OeX/exec";
-
-        // Extract the user's UUID from the URL parameter we set in LSL!
         const urlParams = new URLSearchParams(window.location.search);
         const userUUID = urlParams.get('uuid');
 
-        // ==========================================
-        // 2. UI NAVIGATION LOGIC
-        // ==========================================
-        const radarView = document.getElementById('radarView');
-        const settingsView = document.getElementById('settingsView');
-
-        document.getElementById('settingsBtn').onclick = function() {
-            radarView.style.display = 'none';
-            settingsView.style.display = 'block';
-        };
-
-        document.getElementById('backBtn').onclick = function() {
-            settingsView.style.display = 'none';
-            radarView.style.display = 'block';
-        };
-
-        // ==========================================
-        // 3. API LOGIC: REGISTER USER'S SHEET
-        // ==========================================
-        document.getElementById('registerBtn').onclick = async function() {
+        // Initialization
+        window.onload = async () => {
             if (!userUUID) {
-                alert("Error: Missing UUID! You must run this inside Second Life.");
+                document.getElementById('loadingView').innerHTML = "<span style='color:#ef4444'>Error: No UUID found. Please run this inside the SL HUD.</span>";
                 return;
             }
+            await checkStatus();
+        };
 
-            const sheetUrl = document.getElementById('sheetUrlInput').value;
-            const msgBox = document.getElementById('registerMsg');
+        async function checkStatus() {
+            try {
+                const url = `${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}`;
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.status === "success") {
+                    showDashboard(result.data);
+                } else {
+                    showView('welcomeView');
+                }
+            } catch (err) {
+                console.error("Connection error:", err);
+                showView('welcomeView'); // Default to setup on reachability error
+            }
+        }
+
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
             
+            // Hide/Show Nav
+            const isDashboard = document.getElementById(viewId).classList.contains('dashboard-tab');
+            document.getElementById('mainNav').style.display = isDashboard ? 'block' : 'none';
+        }
+
+        function showTab(tabName) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.innerText.toLowerCase() === tabName) btn.classList.add('active');
+            });
+
+            // Show view
+            showView(tabName + 'Tab');
+        }
+
+        function showDashboard(data) {
+            showTab('nearby');
+            // Here you would populate the radarList and contactsList using the 'data' object
+            console.log("Dashboard Data Loaded:", data);
+        }
+
+        async function handleRegister() {
+            const sheetUrl = document.getElementById('sheetUrlInput').value;
+            const statusBox = document.getElementById('setupStatus');
+            const btn = document.getElementById('registerBtn');
+
             if (!sheetUrl) {
-                msgBox.style.color = "#ef4444";
-                msgBox.innerText = "Please paste your sheet URL!";
-                msgBox.style.display = "block";
+                statusBox.innerHTML = "<span style='color:#ef4444'>Error: Link required</span>";
                 return;
             }
 
-            // Connecting state
-            this.innerText = "Connecting...";
-            msgBox.style.color = "#38bdf8";
-            msgBox.innerText = "Reaching Master Engine...";
-            msgBox.style.display = "block";
+            btn.disabled = true;
+            statusBox.innerHTML = "<span style='color:#38bdf8'>Registering your database...</span>";
 
             try {
-                // Call the API (action=register)
                 const formData = new FormData();
                 formData.append('action', 'register');
                 formData.append('uuid', userUUID);
                 formData.append('sheetUrl', sheetUrl);
-                // (Note: we didn't pass name here because we don't have it natively in JS, but LSL does!)
 
                 const response = await fetch(MASTER_ENGINE_URL, {
                     method: 'POST',
                     body: formData
                 });
-                
                 const result = await response.json();
-                
+
                 if (result.status === "success") {
-                    msgBox.style.color = "#4ade80";
-                    msgBox.innerText = "Success! Database Connected!";
-                    this.innerText = "Connected";
+                    statusBox.innerHTML = "<span style='color:#4ade80'>Success! Initializing SCM...</span>";
+                    setTimeout(() => checkStatus(), 1500);
                 } else {
                     throw new Error(result.message);
                 }
-
             } catch (err) {
-                msgBox.style.color = "#ef4444";
-                msgBox.innerText = "Error: " + err.message;
-                this.innerText = "Try Again";
+                btn.disabled = false;
+                statusBox.innerHTML = `<span style='color:#ef4444'>Error: ${err.message}</span>`;
             }
-        };
+        }
     </script>
 </body>
 
