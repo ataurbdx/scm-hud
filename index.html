@@ -12,24 +12,25 @@
             color: #f8fafc;
             font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
-            /* padding: 250px 0; */
             zoom: 2;
         }
 
         .container {
-            /* transform: scaleY(2); */
             max-width: 900px;
             margin: 0 auto;
             padding: 0 20px;
         }
 
-        /* NAVIGATION TABS */
+        /* NAVIGATION TABS (Sticky) */
         .nav-tabs {
+            position: sticky;
+            top: 0;
+            background: #09090b;
             border-bottom: 2px solid #27272a;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             overflow: hidden;
             display: none;
-            /* Hidden during setup */
+            z-index: 1000;
         }
 
         .tab-btn {
@@ -38,7 +39,7 @@
             border: none;
             color: #71717a;
             padding: 15px 25px;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
             cursor: pointer;
             border-bottom: 2px solid transparent;
@@ -51,34 +52,15 @@
         }
 
         /* VIEWS */
-        .view {
-            display: none;
-        }
-
-        .view.active {
-            display: block;
-        }
+        .view { display: none; }
+        .view.active { display: block; }
 
         /* LOADING SCREEN */
-        #loadingView {
-            text-align: center;
-            padding-top: 100px;
-            font-size: 24px;
-            color: #71717a;
-        }
+        #loadingView { text-align: center; padding-top: 100px; font-size: 24px; color: #71717a; }
 
         /* WELCOME / SETUP VIEW */
-        .welcome-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .welcome-header h1 {
-            color: #38bdf8;
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-
+        .welcome-header { text-align: center; margin-bottom: 40px; }
+        .welcome-header h1 { color: #38bdf8; font-size: 48px; margin-bottom: 10px; }
         .instruction-box {
             background: #18181b;
             border: 1px solid #333;
@@ -87,22 +69,13 @@
             line-height: 1.6;
             margin-bottom: 30px;
         }
-
-        .step {
-            margin-bottom: 15px;
-            font-size: 19px;
-        }
-
-        .step-num {
-            display: inline-block;
-            width: 32px;
-            height: 32px;
-            background: #38bdf8;
-            color: #000;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 32px;
-            margin-right: 12px;
+        .step { margin-bottom: 15px; font-size: 19px; }
+        .step-num { 
+            display: inline-block; 
+            width: 32px; height: 32px; 
+            background: #38bdf8; color: #000; 
+            border-radius: 50%; text-align: center; 
+            line-height: 32px; margin-right: 12px; 
             font-weight: bold;
         }
 
@@ -116,29 +89,17 @@
             overflow: hidden;
         }
 
-        .input-group {
-            margin-bottom: 20px;
-        }
-
         input[type="text"] {
             width: 100%;
             box-sizing: border-box;
             background: #0f172a;
-            /* Slightly darker/deeper blue-black */
             border: 2px solid #38bdf8;
-            /* Highlighted border */
             color: #fff;
             padding: 25px;
             font-size: 22px;
             border-radius: 12px;
             outline: none;
             box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
-            /* Subtle glow */
-        }
-
-        input:focus {
-            border-color: #7dd3fc;
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
         }
 
         .btn {
@@ -153,134 +114,91 @@
             width: 100%;
         }
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .status-msg {
-            margin-top: 15px;
-            text-align: center;
-            font-size: 18px;
-        }
-
         /* LIST ITEMS */
         .item {
             border-bottom: 1px solid #27272a;
             padding: 15px 0;
+            min-height: 60px;
             overflow: hidden;
+            display: flex; /* Using flex for icon alignment if possible, otherwise float */
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .item:last-child {
-            border-bottom: none;
+        .item-info { flex-grow: 1; min-width: 0; }
+        .item-name { font-size: 22px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-meta { color: #38bdf8; font-size: 16px; font-weight: 600; margin-top: 4px; }
+
+        .item-actions {
+            display: flex;
+            gap: 12px;
+            margin-left: 15px;
         }
 
-        .item-info {
-            float: left;
+        .action-icon {
+            background: #27272a;
+            color: #f8fafc;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
         }
+        .action-icon:hover { background: #38bdf8; color: #000; }
+        .action-icon.add-btn { background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid #38bdf8; }
 
-        .item-name {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .item-meta {
-            color: #71717a;
-            font-size: 18px;
-        }
-
-        .item-action {
-            float: right;
-            margin-top: 5px;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid #38bdf8;
-            color: #38bdf8;
-            padding: 8px 15px;
-            border-radius: 6px;
-            font-size: 16px;
-        }
+        .status-msg { margin-top: 15px; text-align: center; font-size: 18px; }
     </style>
 </head>
 
 <body>
     <div class="container">
 
-        <!-- NAVIGATION (Visible only when logged in) -->
+        <!-- NAVIGATION (Sticky) -->
         <div id="mainNav" class="nav-tabs">
             <button class="tab-btn active" onclick="showTab('nearby')">Nearby</button>
+            <button class="tab-btn" onclick="showTab('history')">History</button>
             <button class="tab-btn" onclick="showTab('contacts')">Contacts</button>
             <button class="tab-btn" onclick="showTab('settings')">Settings</button>
         </div>
 
-        <!-- VIEW: LOADING -->
+        <!-- VIEWS -->
         <div id="loadingView" class="view active">
             Connecting to SCM Cloud...
         </div>
 
-        <!-- VIEW: WELCOME / SETUP -->
         <div id="welcomeView" class="view">
-            <div class="welcome-header">
-                <h1>Welcome to SCM</h1>
-                <p style="color: #71717a; font-size: 20px;">Ready to manage your Second Life contacts?</p>
-            </div>
-
+            <div class="welcome-header"><h1>Welcome to SCM</h1></div>
             <div class="instruction-box">
                 <div class="step"><span class="step-num">1</span> Create a blank Google Sheet.</div>
-                <div class="step"><span class="step-num">2</span> <b>Share</b> as "Public" OR add Access to: <b
-                        style="color:#38bdf8">ataurbdc16@gmail.com</b></div>
+                <div class="step"><span class="step-num">2</span> <b>Share</b> as "Public" OR add Access to: <b style="color:#38bdf8">ataurbdc16@gmail.com</b></div>
                 <div class="step"><span class="step-num">3</span> Paste the Sheet URL below.</div>
             </div>
-
-            <div class="input-group">
-                <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/...">
-            </div>
-            <button id="registerBtn" class="btn" onclick="handleRegister()">Connect Database</button>
+            <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/...">
+            <button id="registerBtn" class="btn" style="margin-top:20px;" onclick="handleRegister()">Connect Database</button>
             <div id="setupStatus" class="status-msg"></div>
         </div>
 
-        <!-- VIEW: DASHBOARD (NEARBY TAB) -->
         <div id="nearbyTab" class="view dashboard-tab">
-            <div class="card">
-                <div id="radarList">
-                    <div class="item">
-                        <div class="item-info">
-                            <div class="item-name">Scanning...</div>
-                            <div class="item-meta">Waiting for radar update</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div class="card"><div id="radarList"></div></div>
         </div>
 
-        <!-- VIEW: DASHBOARD (CONTACTS TAB) -->
+        <div id="historyTab" class="view dashboard-tab">
+            <div class="card"><div id="historyList"></div></div>
+        </div>
+
         <div id="contactsTab" class="view dashboard-tab">
-            <div class="card">
-                <div id="contactsList">
-                    <p style="color: #71717a; text-align: center;">No saved contacts yet.</p>
-                </div>
-            </div>
+            <div class="card"><div id="contactsList"><p style="color:#71717a; text-align:center;">No contacts saved.</p></div></div>
         </div>
 
-        <!-- VIEW: DASHBOARD (SETTINGS TAB) -->
         <div id="settingsTab" class="view dashboard-tab">
             <div class="card">
-                <h2 style="margin-top: 0; color: #38bdf8;">HUD Settings</h2>
-                <div class="item">
-                    <div class="item-info">
-                        <div class="item-name">Database URL</div>
-                        <div class="item-meta" id="displaySheetId">Connected</div>
-                    </div>
-                    <div class="item-action">
-                        <button class="btn-outline" onclick="showView('welcomeView')">Change</button>
-                    </div>
-                </div>
-                <div class="item">
-                    <p style="color: #71717a;">Categories, Tags, and Theme settings coming soon!</p>
-                </div>
+                <h2 style="margin-top:0; color:#38bdf8;">Settings</h2>
+                <button class="btn" style="background:#ef4444; color:#fff;" onclick="showView('welcomeView')">Reset Database Connection</button>
             </div>
         </div>
 
@@ -290,153 +208,88 @@
         const MASTER_ENGINE_URL = "https://script.google.com/macros/s/AKfycbxmP0JWumHog423X-Dq8ZIEYtDoJagl2YCOAd1Lse2I4tyX8mzl2mytkI8Z9uj37OeX/exec";
         const urlParams = new URLSearchParams(window.location.search);
         const userUUID = urlParams.get('uuid');
-        const userName = urlParams.get('name'); // Capture username from HUD script
-
+        const userName = urlParams.get('name');
         let refreshInterval;
 
-        // Initialization
-        window.onload = async () => {
-            if (!userUUID) {
-                document.getElementById('loadingView').innerHTML = "<span style='color:#ef4444'>Error: No UUID found. Please run this inside the SL HUD.</span>";
-                return;
-            }
-            await initHUD();
-        };
+        window.onload = () => { if (userUUID) initHUD(); else document.getElementById('loadingView').innerHTML = "Run from SL HUD."; };
 
         async function initHUD() {
             await checkStatus();
-
-            // Auto-refresh the dashboard every 10 seconds
-            if (!refreshInterval) {
-                refreshInterval = setInterval(checkStatus, 10000);
-            }
+            if (!refreshInterval) refreshInterval = setInterval(checkStatus, 10000);
         }
 
         async function checkStatus() {
             try {
-                const url = `${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}`;
-                const response = await fetch(url);
+                const response = await fetch(`${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}`);
                 const result = await response.json();
-
-                if (result.status === "success") {
-                    showDashboard(result.data);
-                } else {
-                    showView('welcomeView');
-                }
-            } catch (err) {
-                console.error("Connection error:", err);
-                // Keep showing dash if already active, otherwise show setup
-                if (!document.getElementById('nearbyTab').classList.contains('active')) {
-                    showView('welcomeView');
-                }
-            }
+                if (result.status === "success") renderData(result.data); else showView('welcomeView');
+            } catch (err) { console.error(err); }
         }
 
         function showView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
-
-            const isDashboard = document.getElementById(viewId).classList.contains('dashboard-tab');
-            document.getElementById('mainNav').style.display = isDashboard ? 'block' : 'none';
+            document.getElementById('mainNav').style.display = document.getElementById(viewId).classList.contains('dashboard-tab') ? 'block' : 'none';
         }
 
         function showTab(tabName) {
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.innerText.toLowerCase() === tabName) btn.classList.add('active');
-            });
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.innerText.toLowerCase() === tabName));
             showView(tabName + 'Tab');
         }
 
-        function showDashboard(data) {
-            // Only force-switch to nearby if we are currently on the setup/loading screens
+        function renderData(data) {
             const currentView = document.querySelector('.view.active');
-            if (currentView.id === 'loadingView' || currentView.id === 'welcomeView') {
-                showTab('nearby');
-            }
+            if (currentView.id === 'loadingView' || currentView.id === 'welcomeView') showTab('nearby');
+            
+            const now = new Date();
+            const rawRadar = data.radar || [];
+            
+            // NEARBY: Seen < 90 seconds ago, Sorted by Distance (Closest First)
+            const nearby = rawRadar.filter(p => (now - new Date(p.last_seen)) < 90000)
+                                   .sort((a, b) => (a.dist || 0) - (b.dist || 0));
+            
+            // HISTORY: Everyone else
+            const history = rawRadar.sort((a, b) => new Date(b.last_seen) - new Date(a.last_seen));
 
-            renderRadar(data.radar || []);
+            renderList('radarList', nearby, true);
+            renderList('historyList', history, false);
             renderContacts(data.contacts || []);
         }
 
-        function renderRadar(items) {
-            const list = document.getElementById('radarList');
-            if (items.length === 0) {
-                list.innerHTML = '<div class="item-meta" style="text-align:center; padding:20px;">Scanning for neighbors...</div>';
-                return;
-            }
-
-            list.innerHTML = ""; // Clear "Scanning..." message
-            items.forEach(person => {
-                const html = `
-                    <div class="item">
-                        <div class="item-info">
-                            <div class="item-name">${person.name}</div>
-                            <div class="item-meta">UUID: ${person.key.substring(0, 8)}... | Last seen: ${new Date(person.last_seen).toLocaleTimeString()}</div>
-                        </div>
-                        <div class="item-action">
-                            <button class="btn-outline">Add Contact</button>
-                        </div>
+        function renderList(targetId, items, isNearby) {
+            const list = document.getElementById(targetId);
+            if (items.length === 0) { list.innerHTML = `<div class="status-msg">No ${isNearby ? 'neighbors' : 'history'} found.</div>`; return; }
+            
+            list.innerHTML = items.map(p => `
+                <div class="item">
+                    <div class="item-info">
+                        <div class="item-name">${p.name}</div>
+                        <div class="item-meta">${Math.round(p.dist || 0)}m range</div>
                     </div>
-                `;
-                list.innerHTML += html;
-            });
+                    <div class="item-actions">
+                        <button class="action-icon" title="View Profile" onclick="openLink('about','${p.key}')">👤</button>
+                        <button class="action-icon" title="Send IM" onclick="openLink('im','${p.key}')">💬</button>
+                        <button class="action-icon add-btn" title="Add Contact">➕</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        function renderContacts(items) {
-            const list = document.getElementById('contactsList');
-            if (items.length === 0) return;
-
-            list.innerHTML = "";
-            items.forEach(c => {
-                const html = `
-                    <div class="item">
-                        <div class="item-info">
-                            <div class="item-name">${c.name}</div>
-                            <div class="item-meta">${c.notes || "No notes."}</div>
-                        </div>
-                    </div>
-                `;
-                list.innerHTML += html;
-            });
+        function openLink(type, uuid) {
+            window.location.href = `secondlife:///app/agent/${uuid}/${type}`;
         }
 
         async function handleRegister() {
             const sheetUrl = document.getElementById('sheetUrlInput').value;
-            const statusBox = document.getElementById('setupStatus');
-            const btn = document.getElementById('registerBtn');
-
-            if (!sheetUrl) {
-                statusBox.innerHTML = "<span style='color:#ef4444'>Error: Link required</span>";
-                return;
-            }
-
-            btn.disabled = true;
-            statusBox.innerHTML = "<span style='color:#38bdf8'>Registering your database...</span>";
-
+            if (!sheetUrl) return;
+            document.getElementById('setupStatus').innerText = "Connecting...";
             try {
-                const formData = new FormData();
-                formData.append('action', 'register');
-                formData.append('uuid', userUUID);
-                formData.append('name', userName || "Unknown User"); // Send captured username!
-                formData.append('sheetUrl', sheetUrl);
-
-                const response = await fetch(MASTER_ENGINE_URL, {
-                    method: 'POST',
-                    body: formData
-                });
-                const result = await response.json();
-
-                if (result.status === "success") {
-                    statusBox.innerHTML = "<span style='color:#4ade80'>Success! Initializing SCM...</span>";
-                    setTimeout(() => initHUD(), 1500);
-                } else {
-                    throw new Error(result.message);
-                }
-            } catch (err) {
-                btn.disabled = false;
-                statusBox.innerHTML = `<span style='color:#ef4444'>Error: ${err.message}</span>`;
-            }
+                const fd = new FormData();
+                fd.append('action', 'register'); fd.append('uuid', userUUID); fd.append('name', userName); fd.append('sheetUrl', sheetUrl);
+                const res = await fetch(MASTER_ENGINE_URL, { method: 'POST', body: fd });
+                const result = await res.json();
+                if (result.status === "success") initHUD(); else throw new Error(result.message);
+            } catch (err) { document.getElementById('setupStatus').innerText = "Error: " + err.message; }
         }
     </script>
 </body>

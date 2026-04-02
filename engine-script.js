@@ -149,13 +149,13 @@ function bulkLogData(uuid, records) {
     }
 
     if (dRow == -1) {
-      // summary_id, owner_uuid, target_uuid, target_name, date, is_protected, total_scans, last_seen_time
-      dailyTab.appendRow([summaryId, owner, p.target_uuid, p.target_name, today, "FALSE", 1, new Date()]);
-      // Manually add to working array to prevent duplicates in same packet
-      dailyData.push([summaryId, owner, p.target_uuid, p.target_name, today, "FALSE", 1, new Date()]);
+      // summary_id, owner_uuid, target_uuid, target_name, date, is_protected, total_scans, last_seen_time, last_dist
+      dailyTab.appendRow([summaryId, owner, p.target_uuid, p.target_name, today, "FALSE", 1, new Date(), p.dist || 0]);
+      dailyData.push([summaryId, owner, p.target_uuid, p.target_name, today, "FALSE", 1, new Date(), p.dist || 0]);
     } else {
       dailyTab.getRange(dRow + 1, 7).setValue(parseInt(dailyData[dRow][6]) + 1);
       dailyTab.getRange(dRow + 1, 8).setValue(new Date());
+      dailyTab.getRange(dRow + 1, 9).setValue(p.dist || 0);
     }
 
     // Process Encounters
@@ -193,9 +193,13 @@ function getAvatarData(uuid) {
   if (dailyTab) {
     const data = dailyTab.getDataRange().getValues();
     for (let i = data.length - 1; i > 0 && responseData.radar.length < 50; i--) {
-        // Only return stuff logged by THIS alt (or if shared_mode is true later)
         if (data[i][1] == uuid) {
-            responseData.radar.push({ name: data[i][3], key: data[i][2], last_seen: data[i][7] });
+            responseData.radar.push({ 
+                name: data[i][3], 
+                key: data[i][2], 
+                last_seen: data[i][7],
+                dist: data[i][8] || 0 
+            });
         }
     }
   }
@@ -238,7 +242,7 @@ function setupUserSheet(ss) {
     "Categories": ["owner_uuid", "cat_id", "cat_name", "cat_color", "cat_icon", "created_at"],
     "Tags": ["owner_uuid", "tag_id", "tag_name", "tag_color", "tag_icon", "created_at"],
     "Contacts": ["owner_uuid", "contact_uuid", "contact_name", "cat_ids", "tag_ids", "notes", "created_at"],
-    "Seen_Daily": ["summary_id", "owner_uuid", "target_uuid", "target_name", "date", "is_protected", "total_scans", "last_seen_time"],
+    "Seen_Daily": ["summary_id", "owner_uuid", "target_uuid", "target_name", "date", "is_protected", "total_scans", "last_seen_time", "last_dist"],
     "Encounters": ["summary_id", "timestamp", "sim_name", "sim_pos", "parcel_name"]
   };
 

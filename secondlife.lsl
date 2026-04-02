@@ -21,8 +21,8 @@ doRadarScan()
 {
     list agents = llGetAgentList(AGENT_LIST_REGION, []);
     integer count = llGetListLength(agents);
+    vector myPos = llGetPos();
     
-    // We only log IF there are other people nearby besides the owner
     if (count <= 1) return;
 
     string bulk_data = "["; 
@@ -34,12 +34,12 @@ doRadarScan()
         key target = llList2Key(agents, i);
         if (target != llGetOwner()) 
         {
-            // Names: "Display Name (Username)"
             string dName = llGetDisplayName(target);
             string uName = llGetUsername(target);
             string fullName = dName + " (" + uName + ")";
             
             vector pos = llList2Vector(llGetObjectDetails(target, [OBJECT_POS]), 0);
+            float dist = llVecDist(pos, myPos);
             string sim = llGetRegionName();
             string parcel = llList2String(llGetParcelDetails(pos, [PARCEL_DETAILS_NAME]), 0);
 
@@ -47,7 +47,8 @@ doRadarScan()
                            "\",\"target_name\":\"" + fullName + 
                            "\",\"sim\":\"" + sim + 
                            "\",\"pos\":\"" + (string)pos + 
-                           "\",\"parcel\":\"" + parcel + "\"}";
+                           "\",\"parcel\":\"" + parcel + 
+                           "\",\"dist\":" + (string)dist + "}";
             
             if (logged_count > 0) bulk_data += ",";
             bulk_data += entry;
