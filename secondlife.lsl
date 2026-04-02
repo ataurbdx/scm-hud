@@ -66,8 +66,8 @@ doRadarScan()
 // --- INITIALIZE UI ---
 refreshUI()
 {
-    // Build URL with UUID mapping and Cache Buster
-    string final_url = BROWSER_URL + "?uuid=" + (string)llGetOwner();
+    // Build URL with UUID mapping, Username mapping, and Cache Buster
+    string final_url = BROWSER_URL + "?uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(llGetUsername(llGetOwner()));
     if (FRESH_LOAD) {
         final_url += "&v=" + (string)llRound(llFrand(9999999.0));
     }

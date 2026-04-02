@@ -231,6 +231,9 @@
         const MASTER_ENGINE_URL = "https://script.google.com/macros/s/AKfycbxmP0JWumHog423X-Dq8ZIEYtDoJagl2YCOAd1Lse2I4tyX8mzl2mytkI8Z9uj37OeX/exec";
         const urlParams = new URLSearchParams(window.location.search);
         const userUUID = urlParams.get('uuid');
+        const userName = urlParams.get('name'); // Capture username from HUD script
+
+        let refreshInterval;
 
         // Initialization
         window.onload = async () => {
@@ -238,8 +241,17 @@
                 document.getElementById('loadingView').innerHTML = "<span style='color:#ef4444'>Error: No UUID found. Please run this inside the SL HUD.</span>";
                 return;
             }
-            await checkStatus();
+            await initHUD();
         };
+
+        async function initHUD() {
+            await checkStatus();
+            
+            // Auto-refresh the dashboard every 10 seconds
+            if (!refreshInterval) {
+                refreshInterval = setInterval(checkStatus, 10000);
+            }
+        }
 
         async function checkStatus() {
             try {
@@ -254,7 +266,10 @@
                 }
             } catch (err) {
                 console.error("Connection error:", err);
-                showView('welcomeView'); // Default to setup on reachability error
+                // Keep showing dash if already active, otherwise show setup
+                if (!document.getElementById('nearbyTab').classList.contains('active')) {
+                    showView('welcomeView');
+                }
             }
         }
 
@@ -262,26 +277,69 @@
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
             
-            // Hide/Show Nav
             const isDashboard = document.getElementById(viewId).classList.contains('dashboard-tab');
             document.getElementById('mainNav').style.display = isDashboard ? 'block' : 'none';
         }
 
         function showTab(tabName) {
-            // Update buttons
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active');
                 if (btn.innerText.toLowerCase() === tabName) btn.classList.add('active');
             });
-
-            // Show view
             showView(tabName + 'Tab');
         }
 
         function showDashboard(data) {
-            showTab('nearby');
-            // Here you would populate the radarList and contactsList using the 'data' object
-            console.log("Dashboard Data Loaded:", data);
+            // Only force-switch to nearby if we are currently on the setup/loading screens
+            const currentView = document.querySelector('.view.active');
+            if (currentView.id === 'loadingView' || currentView.id === 'welcomeView') {
+                showTab('nearby');
+            }
+
+            renderRadar(data.radar || []);
+            renderContacts(data.contacts || []);
+        }
+
+        function renderRadar(items) {
+            const list = document.getElementById('radarList');
+            if (items.length === 0) {
+                list.innerHTML = '<div class="item-meta" style="text-align:center; padding:20px;">Scanning for neighbors...</div>';
+                return;
+            }
+
+            list.innerHTML = ""; // Clear "Scanning..." message
+            items.forEach(person => {
+                const html = `
+                    <div class="item">
+                        <div class="item-info">
+                            <div class="item-name">${person.name}</div>
+                            <div class="item-meta">UUID: ${person.key.substring(0,8)}... | Last seen: ${new Date(person.last_seen).toLocaleTimeString()}</div>
+                        </div>
+                        <div class="item-action">
+                            <button class="btn-outline">Add Contact</button>
+                        </div>
+                    </div>
+                `;
+                list.innerHTML += html;
+            });
+        }
+
+        function renderContacts(items) {
+            const list = document.getElementById('contactsList');
+            if (items.length === 0) return;
+
+            list.innerHTML = "";
+            items.forEach(c => {
+                const html = `
+                    <div class="item">
+                        <div class="item-info">
+                            <div class="item-name">${c.name}</div>
+                            <div class="item-meta">${c.notes || "No notes."}</div>
+                        </div>
+                    </div>
+                `;
+                list.innerHTML += html;
+            });
         }
 
         async function handleRegister() {
@@ -301,6 +359,7 @@
                 const formData = new FormData();
                 formData.append('action', 'register');
                 formData.append('uuid', userUUID);
+                formData.append('name', userName || "Unknown User"); // Send captured username!
                 formData.append('sheetUrl', sheetUrl);
 
                 const response = await fetch(MASTER_ENGINE_URL, {
@@ -311,7 +370,7 @@
 
                 if (result.status === "success") {
                     statusBox.innerHTML = "<span style='color:#4ade80'>Success! Initializing SCM...</span>";
-                    setTimeout(() => checkStatus(), 1500);
+                    setTimeout(() => initHUD(), 1500);
                 } else {
                     throw new Error(result.message);
                 }
