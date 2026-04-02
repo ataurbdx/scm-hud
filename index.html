@@ -66,19 +66,19 @@
         .welcome-header h1 { color: #38bdf8; font-size: 48px; margin-bottom: 10px; }
         .instruction-box {
             background: #18181b;
-            border: 1px solid #27272a;
+            border: 1px solid #333;
             border-radius: 12px;
             padding: 25px;
             line-height: 1.6;
             margin-bottom: 30px;
         }
-        .step { margin-bottom: 15px; font-size: 18px; }
+        .step { margin-bottom: 15px; font-size: 19px; }
         .step-num { 
             display: inline-block; 
-            width: 30px; height: 30px; 
+            width: 32px; height: 32px; 
             background: #38bdf8; color: #000; 
             border-radius: 50%; text-align: center; 
-            line-height: 30px; margin-right: 10px; 
+            line-height: 32px; margin-right: 12px; 
             font-weight: bold;
         }
 
@@ -96,15 +96,19 @@
         input[type="text"] {
             width: 100%;
             box-sizing: border-box;
-            background: #09090b;
-            border: 1px solid #27272a;
+            background: #0f172a; /* Slightly darker/deeper blue-black */
+            border: 2px solid #38bdf8; /* Highlighted border */
             color: #fff;
-            padding: 20px;
-            font-size: 20px;
-            border-radius: 8px;
+            padding: 25px; 
+            font-size: 22px; 
+            border-radius: 12px;
             outline: none;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); /* Subtle glow */
         }
-        input:focus { border-color: #38bdf8; }
+        input:focus { 
+            border-color: #7dd3fc; 
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4); 
+        }
 
         .btn {
             background: #38bdf8;
@@ -168,7 +172,7 @@
 
             <div class="instruction-box">
                 <div class="step"><span class="step-num">1</span> Create a blank Google Sheet.</div>
-                <div class="step"><span class="step-num">2</span> Click <b>Share</b> and add your service email.</div>
+                <div class="step"><span class="step-num">2</span> <b>Share</b> as "Public" OR add Access to: <b style="color:#38bdf8">ataurbdc16@gmail.com</b></div>
                 <div class="step"><span class="step-num">3</span> Paste the Sheet URL below.</div>
             </div>
 
