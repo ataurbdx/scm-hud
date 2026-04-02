@@ -254,12 +254,12 @@
             
             const rawRadar = data.radar || [];
             
-            // NEARBY: Seen < 120 seconds ago relative to SERVER currentTime (Number comparison)
-            const nearby = rawRadar.filter(p => (serverTimeMs - new Date(p.last_seen).getTime()) < 120000)
+            // NEARBY: Now controlled by Google Cloud (100% Reliable)
+            const nearby = rawRadar.filter(p => p.is_nearby === true)
                                    .sort((a, b) => (a.dist || 0) - (b.dist || 0));
             
             // HISTORY: Everyone seen today
-            const history = rawRadar.sort((a, b) => new Date(b.last_seen) - new Date(a.last_seen));
+            const history = rawRadar.sort((a, b) => b.last_seen - a.last_seen);
 
             renderNearbyList(nearby);
             renderHistoryList(history);

@@ -72,9 +72,13 @@ function registerUser(uuid, name, sheetUrl) {
     }
 
     // Registry Update
-    const master = SpreadsheetApp.getActiveSpreadsheet();
-    let reg = master.getSheetByName(MASTER_REGISTRY_NAME) || master.insertSheet(MASTER_REGISTRY_NAME);
-    if (reg.getLastRow() === 0) reg.appendRow(["Avatar UUID", "Google Sheet ID", "Date Registered", "Frequency"]);
+  const master = SpreadsheetApp.getActiveSpreadsheet();
+  let reg = master.getSheetByName(MASTER_REGISTRY_NAME) || master.insertSheet(MASTER_REGISTRY_NAME);
+  if (reg.getLastRow() === 0) {
+    reg.appendRow(["Avatar UUID", "Google Sheet ID", "Date Registered", "Frequency"]);
+    reg.getRange(1, 1, 1, 4).setFontWeight("bold").setBackground("#cfe2f3");
+    reg.setFrozenRows(1); // FREEZE HEADER (FRIDGE)
+  }
 
     const mData = reg.getDataRange().getValues();
     let mExists = false;
@@ -111,18 +115,23 @@ function getAvatarData(uuid, name) {
     const dData = dailyTab.getDataRange().getValues();
 
         const radar = [];
+        const nowMs = Date.now();
         for (let i = dData.length - 1; i > 0 && radar.length < 50; i--) {
             if (dData[i][dMap["owner_uuid"] - 1] == uuid) {
-                // Combine Date + Time to create a valid JS Date for the HUD (Backwards compatible)
-                const dateStr = Utilities.formatDate(dData[i][dMap["date"] - 1], "GMT", "yyyy-MM-dd");
+                // Combine Date + Time
+                const dateStr = Utilities.formatDate(new Date(dData[i][dMap["date"] - 1]), "GMT", "yyyy-MM-dd");
                 const timeStr = dData[i][dMap["last_seen_time"] - 1];
-                const fullDateTime = new Date(dateStr + " " + timeStr);
+                const lastSeenMs = new Date(dateStr + " " + timeStr).getTime();
+
+                // CLOUD-SIDE NEARBY FILTER (90 seconds)
+                const isNearby = (nowMs - lastSeenMs) < 90000;
 
                 radar.push({
                     name: dData[i][dMap["target_name"] - 1],
                     key: dData[i][dMap["target_uuid"] - 1],
-                    last_seen: fullDateTime.getTime(), // SEND NUMBER (MS) TO HUD
-                    dist: dData[i][dMap["last_dist"] - 1] || 0
+                    last_seen: lastSeenMs,
+                    dist: dData[i][dMap["last_dist"] - 1] || 0,
+                    is_nearby: isNearby // Google decides if they are nearby!
                 });
             }
         }
