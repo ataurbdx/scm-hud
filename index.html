@@ -36,7 +36,7 @@
 
         /* Header */
         .header {
-            padding: 20px;
+            padding: 30px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -45,24 +45,24 @@
             backdrop-filter: blur(10px);
         }
         .header h1 {
-            font-size: 22px;
+            font-size: 34px;
             font-weight: 600;
             color: var(--accent);
             text-shadow: 0 0 10px var(--accent-glow);
-            letter-spacing: 1px;
+            letter-spacing: 2px;
         }
         .status {
-            font-size: 14px;
+            font-size: 20px;
             color: #4ade80;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 10px;
             font-weight: 600;
         }
         .status::before {
             content: '';
-            width: 8px;
-            height: 8px;
+            width: 12px;
+            height: 12px;
             background: #4ade80;
             border-radius: 50%;
             box-shadow: 0 0 8px #4ade80;
@@ -71,23 +71,23 @@
         /* Content list */
         .content {
             flex: 1;
-            padding: 20px;
+            padding: 30px 40px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 20px;
         }
 
         /* Scrollbar styling */
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
         /* Glassmorphic Item Card */
         .item-card {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
+            border-radius: 16px;
+            padding: 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -97,18 +97,18 @@
         .item-card:hover {
             background: rgba(255,255,255,0.06);
             border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.5);
         }
 
         .avatar-info {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 20px;
         }
         .avatar-img {
-            width: 42px;
-            height: 42px;
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
             background: #1e293b;
             border: 2px solid var(--border);
@@ -117,20 +117,20 @@
             align-items: center;
             font-weight: 600;
             color: var(--text-dim);
-            font-size: 18px;
+            font-size: 26px;
         }
         
-        .name { font-size: 18px; font-weight: 600; }
-        .distance { font-size: 14px; color: var(--accent); margin-top: 4px; }
+        .name { font-size: 28px; font-weight: 600; }
+        .distance { font-size: 20px; color: var(--accent); margin-top: 6px; }
 
         /* Actions */
         .actions-btn {
             background: rgba(56, 189, 248, 0.1);
             color: var(--accent);
             border: 1px solid var(--accent);
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 14px;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-size: 20px;
             font-weight: 600;
             font-family: inherit;
             cursor: pointer;
@@ -139,7 +139,7 @@
         .actions-btn:hover {
             background: var(--accent);
             color: #000;
-            box-shadow: 0 0 15px var(--accent-glow);
+            box-shadow: 0 0 20px var(--accent-glow);
         }
 
     </style>
