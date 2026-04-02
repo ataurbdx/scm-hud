@@ -13,7 +13,7 @@ string CLOUD_URL   = "https://script.google.com/macros/s/AKfycbxmP0JWumHog423X-D
 integer HUD_FACE   = 4;
 integer FRESH_LOAD = TRUE;
 
-float   SCAN_INTERVAL = 30.0;
+float   SCAN_INTERVAL = 20.0;
 integer RADAR_ACTIVE  = FALSE;
 
 // --- CORE RADAR LOGIC ---

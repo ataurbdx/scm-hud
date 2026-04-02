@@ -237,15 +237,14 @@
             showView(tabName + 'Tab');
         }
 
-        function renderData(data, serverTimeStr) {
+        function renderData(data, serverTimeMs) {
             const currentView = document.querySelector('.view.active');
             if (currentView.id === 'loadingView' || currentView.id === 'welcomeView') showTab('nearby');
             
-            const serverNow = new Date(serverTimeStr);
             const rawRadar = data.radar || [];
             
-            // NEARBY: Seen < 90 seconds ago relative to SERVER time
-            const nearby = rawRadar.filter(p => (serverNow - new Date(p.last_seen)) < 90000)
+            // NEARBY: Seen < 120 seconds ago relative to SERVER currentTime (Number comparison)
+            const nearby = rawRadar.filter(p => (serverTimeMs - new Date(p.last_seen).getTime()) < 120000)
                                    .sort((a, b) => (a.dist || 0) - (b.dist || 0));
             
             // HISTORY: Everyone seen today

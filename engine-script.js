@@ -131,7 +131,11 @@ function getAvatarData(uuid, name) {
         }
     }
 
-    return jsonResponse({ status: "success", data: { radar, contacts }, server_time: new Date() });
+    return jsonResponse({ 
+        status: "success", 
+        data: { radar, contacts }, 
+        server_time: Date.now() // USE NUMBER (MS) FOR 100% ACCURACY
+    });
 }
 
 // ---------------------------------------------------------
