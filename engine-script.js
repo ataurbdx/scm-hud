@@ -134,7 +134,6 @@ function bulkLogData(uuid, records) {
   if (!dailyTab || !encounterTab) throw new Error("Target sheet missing database tabs.");
 
   const today = Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd");
-
   const dailyData = dailyTab.getDataRange().getValues();
   const encounterData = encounterTab.getDataRange().getValues();
 
@@ -149,13 +148,14 @@ function bulkLogData(uuid, records) {
     }
 
     if (dRow == -1) {
-      // summary_id, owner_uuid, target_uuid, target_name, date, is_protected, total_scans, last_seen_time, last_dist
-      dailyTab.appendRow([summaryId, owner, p.target_uuid, p.target_name, today, "FALSE", 1, new Date(), p.dist || 0]);
-      dailyData.push([summaryId, owner, p.target_uuid, p.target_name, today, "FALSE", 1, new Date(), p.dist || 0]);
+      // summary_id, owner_uuid, target_uuid, target_name, date, is_protected, total_scans, last_seen_time, last_dist, first_seen_time
+      dailyTab.appendRow([summaryId, owner, p.target_uuid, p.target_name, today, "FALSE", 1, new Date(), p.dist || 0, new Date()]);
+      dailyData.push([summaryId, owner, p.target_uuid, p.target_name, today, "FALSE", 1, new Date(), p.dist || 0, new Date()]);
     } else {
       dailyTab.getRange(dRow + 1, 7).setValue(parseInt(dailyData[dRow][6]) + 1);
       dailyTab.getRange(dRow + 1, 8).setValue(new Date());
       dailyTab.getRange(dRow + 1, 9).setValue(p.dist || 0);
+      // first_seen at column 10 (index 9) stays as is
     }
 
     // Process Encounters
@@ -198,7 +198,8 @@ function getAvatarData(uuid) {
                 name: data[i][3], 
                 key: data[i][2], 
                 last_seen: data[i][7],
-                dist: data[i][8] || 0 
+                dist: data[i][8] || 0,
+                first_seen: data[i][9] || data[i][7] // Fallback to last_seen for old entries
             });
         }
     }
@@ -213,7 +214,11 @@ function getAvatarData(uuid) {
     }
   }
 
-  return jsonResponse({ status: "success", data: responseData });
+  return jsonResponse({ 
+      status: "success", 
+      data: responseData, 
+      server_time: new Date() // CRITICAL FOR TIMEZONE SYNC
+  });
 }
 
 // ---------------------------------------------------------
@@ -242,17 +247,26 @@ function setupUserSheet(ss) {
     "Categories": ["owner_uuid", "cat_id", "cat_name", "cat_color", "cat_icon", "created_at"],
     "Tags": ["owner_uuid", "tag_id", "tag_name", "tag_color", "tag_icon", "created_at"],
     "Contacts": ["owner_uuid", "contact_uuid", "contact_name", "cat_ids", "tag_ids", "notes", "created_at"],
-    "Seen_Daily": ["summary_id", "owner_uuid", "target_uuid", "target_name", "date", "is_protected", "total_scans", "last_seen_time", "last_dist"],
+    "Seen_Daily": ["summary_id", "owner_uuid", "target_uuid", "target_name", "date", "is_protected", "total_scans", "last_seen_time", "last_dist", "first_seen_time"],
     "Encounters": ["summary_id", "timestamp", "sim_name", "sim_pos", "parcel_name"]
   };
 
   for (var name in sheetsToCreate) {
-    var oldSheet = ss.getSheetByName(name);
-    if (!oldSheet) {
-      var newSheet = ss.insertSheet(name);
-      newSheet.appendRow(sheetsToCreate[name]);
-      newSheet.getRange(1, 1, 1, sheetsToCreate[name].length).setFontWeight("bold").setBackground("#d9d9d9");
-      newSheet.setFrozenRows(1);
+    var sheet = ss.getSheetByName(name);
+    if (!sheet) {
+      sheet = ss.insertSheet(name);
+      sheet.appendRow(sheetsToCreate[name]);
+      sheet.getRange(1, 1, 1, sheetsToCreate[name].length).setFontWeight("bold").setBackground("#d9d9d9");
+      sheet.setFrozenRows(1);
+    } else {
+      // COLUMN SELF-REPAIR (Add missing headers to existing sheets)
+      var currentHeaders = sheet.getRange(1, 1, 1, 15).getValues()[0];
+      var expectedHeaders = sheetsToCreate[name];
+      for (var k = 0; k < expectedHeaders.length; k++) {
+        if (currentHeaders[k] !== expectedHeaders[k]) {
+          sheet.getRange(1, k + 1).setValue(expectedHeaders[k]).setFontWeight("bold").setBackground("#fce4ec");
+        }
+      }
     }
   }
   

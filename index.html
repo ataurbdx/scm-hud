@@ -222,7 +222,7 @@
             try {
                 const response = await fetch(`${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}`);
                 const result = await response.json();
-                if (result.status === "success") renderData(result.data); else showView('welcomeView');
+                if (result.status === "success") renderData(result.data, result.server_time); else showView('welcomeView');
             } catch (err) { console.error(err); }
         }
 
@@ -237,28 +237,28 @@
             showView(tabName + 'Tab');
         }
 
-        function renderData(data) {
+        function renderData(data, serverTimeStr) {
             const currentView = document.querySelector('.view.active');
             if (currentView.id === 'loadingView' || currentView.id === 'welcomeView') showTab('nearby');
             
-            const now = new Date();
+            const serverNow = new Date(serverTimeStr);
             const rawRadar = data.radar || [];
             
-            // NEARBY: Seen < 90 seconds ago, Sorted by Distance (Closest First)
-            const nearby = rawRadar.filter(p => (now - new Date(p.last_seen)) < 90000)
+            // NEARBY: Seen < 90 seconds ago relative to SERVER time
+            const nearby = rawRadar.filter(p => (serverNow - new Date(p.last_seen)) < 90000)
                                    .sort((a, b) => (a.dist || 0) - (b.dist || 0));
             
-            // HISTORY: Everyone else
+            // HISTORY: Everyone seen today
             const history = rawRadar.sort((a, b) => new Date(b.last_seen) - new Date(a.last_seen));
 
-            renderList('radarList', nearby, true);
-            renderList('historyList', history, false);
+            renderNearbyList(nearby);
+            renderHistoryList(history);
             renderContacts(data.contacts || []);
         }
 
-        function renderList(targetId, items, isNearby) {
-            const list = document.getElementById(targetId);
-            if (items.length === 0) { list.innerHTML = `<div class="status-msg">No ${isNearby ? 'neighbors' : 'history'} found.</div>`; return; }
+        function renderNearbyList(items) {
+            const list = document.getElementById('radarList');
+            if (items.length === 0) { list.innerHTML = `<div class="status-msg">No neighbors found.</div>`; return; }
             
             list.innerHTML = items.map(p => `
                 <div class="item">
@@ -270,6 +270,41 @@
                         <button class="action-icon" title="View Profile" onclick="openLink('about','${p.key}')">👤</button>
                         <button class="action-icon" title="Send IM" onclick="openLink('im','${p.key}')">💬</button>
                         <button class="action-icon add-btn" title="Add Contact">➕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderHistoryList(items) {
+            const list = document.getElementById('historyList');
+            if (items.length === 0) { list.innerHTML = `<div class="status-msg">No history found.</div>`; return; }
+            
+            list.innerHTML = items.map(p => {
+                const first = new Date(p.first_seen).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const last = new Date(p.last_seen).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                return `
+                <div class="item">
+                    <div class="item-info">
+                        <div class="item-name">${p.name}</div>
+                        <div class="item-meta">Seen: ${first} - ${last}</div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="action-icon" title="View Profile" onclick="openLink('about','${p.key}')">👤</button>
+                        <button class="action-icon" title="Send IM" onclick="openLink('im','${p.key}')">💬</button>
+                        <button class="action-icon add-btn" title="Add Contact">➕</button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function renderContacts(items) {
+            const list = document.getElementById('contactsList');
+            if (items.length === 0) return;
+            list.innerHTML = items.map(c => `
+                <div class="item">
+                    <div class="item-info">
+                        <div class="item-name">${c.name}</div>
+                        <div class="item-meta">${c.notes || "No notes."}</div>
                     </div>
                 </div>
             `).join('');
