@@ -1,0 +1,134 @@
+/* SCM CENTRAL ENGINE - STABLE DEFAULT UI */
+
+function doGet(e) {
+  var request = e || { parameter: {} };
+  var owner = request.parameter.owner || "Unknown_User";
+  var page = request.parameter.page || "nearby"; 
+
+  var style = `
+    <style>
+      :root {
+        /* FONT SIZE VARIABLES - Change these to scale the whole HUD */
+        --fs-h2: 28px;
+        --fs-tab: 22px;
+        --fs-main: 20px;
+        --fs-small: 16px;
+        --fs-icon: 26px;
+        
+        /* COLOR VARIABLES */
+        --bg-main: #0f172a;
+        --bg-card: rgba(255, 255, 255, 0.07);
+        --accent: #38bdf8;
+        --text-main: #f8fafc;
+        --text-dim: #64748b;
+      }
+
+      body { 
+        background: var(--bg-main); 
+        color: var(--text-main); 
+        font-family: 'Segoe UI', system-ui, sans-serif; 
+        margin: 0; padding: 0; overflow: hidden; 
+        height: 100vh; width: 100vw;
+        display: flex; flex-direction: column;
+      }
+
+      .hud-container { display: flex; flex-direction: column; height: 100%; width: 100%; }
+      
+      /* NAVIGATION BAR */
+      .tab-bar { 
+        display: flex; 
+        background: rgba(30, 41, 59, 0.95); 
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+
+      .tab { 
+        flex: 1; 
+        padding: 20px 10px; /* Increased padding for better click area */
+        text-align: center; 
+        cursor: pointer; 
+        font-weight: bold; 
+        font-size: var(--fs-tab); /* Variable */
+        color: var(--text-dim); 
+        transition: 0.2s;
+      }
+
+      .tab.active { 
+        color: var(--accent); 
+        border-bottom: 4px solid var(--accent); 
+        background: rgba(56, 189, 248, 0.1); 
+      }
+      
+      /* CONTENT AREA */
+      .content { flex: 1; padding: 25px; overflow-y: auto; }
+
+      h2 { 
+        margin: 0 0 15px 0; 
+        color: var(--accent); 
+        text-transform: uppercase; 
+        font-size: var(--fs-h2); /* Variable */
+        letter-spacing: 1px;
+      }
+
+      /* LIST ITEMS */
+      .list-item { 
+        background: var(--bg-card); 
+        padding: 18px; /* Bigger padding for bigger text */
+        border-radius: 12px; 
+        margin-bottom: 12px; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center;
+        border: 1px solid rgba(255,255,255,0.05);
+      }
+
+      .list-item span {
+        font-size: var(--fs-main); /* Variable */
+        font-weight: 500;
+      }
+
+      .btn-icon { 
+        color: var(--accent); 
+        font-size: var(--fs-icon); /* Variable */
+        text-decoration: none; 
+        margin-left: 20px;
+        opacity: 0.8;
+      }
+      
+      .btn-icon:hover { opacity: 1; }
+
+      p { font-size: var(--fs-small); color: var(--text-dim); }
+    </style>
+  `;
+
+  var html = `<html><head>${style}</head><body><div class="hud-container">
+    <div class="tab-bar">
+      <div class="tab ${page == 'nearby' ? 'active' : ''}" onclick="window.location.href='?owner=${owner}&page=nearby'">NEARBY</div>
+      <div class="tab ${page == 'contacts' ? 'active' : ''}" onclick="window.location.href='?owner=${owner}&page=contacts'">CONTACTS</div>
+      <div class="tab ${page == 'notif' ? 'active' : ''}" onclick="window.location.href='?owner=${owner}&page=notif'">ROBOT</div>
+      <div class="tab ${page == 'settings' ? 'active' : ''}" onclick="window.location.href='?owner=${owner}&page=settings'">SETTINGS</div>
+    </div>
+    
+    <div class="content">
+      ${renderContent(page, owner)}
+    </div>
+  </div></body></html>`;
+
+  return HtmlService.createHtmlOutput(html)
+    .setTitle("SCM HUD")
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function renderContent(page, owner) {
+  if (page == "nearby") {
+    return `<h2>Nearby Radar</h2>
+            <div class="list-item"><span>hridoy22 (Example)</span>
+              <div>
+                <a href="secondlife:///app/agent/5fbd6b9b-a7fb-464a-8742-8829f04128f6/about" class="btn-icon">👤</a>
+                <a href="secondlife:///app/im/5fbd6b9b-a7fb-464a-8742-8829f04128f6" class="btn-icon">💬</a>
+              </div>
+            </div>`;
+  }
+  if (page == "contacts") return "<h2>Saved Contacts</h2><p>Database loading...</p>";
+  if (page == "notif") return "<h2>Robot Events</h2><p>Waiting for new arrivals...</p>";
+  if (page == "settings") return "<h2>System Settings</h2><p>Configure HUD and Cloud.</p>";
+}
