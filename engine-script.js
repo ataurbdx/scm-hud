@@ -64,6 +64,8 @@ function registerUser(uuid, name, sheetUrl) {
         row[uMap["user_uuid"] - 1] = uuid;
         row[uMap["user_name"] - 1] = name || "Unknown";
         row[uMap["theme"] - 1] = "Blue";
+        row[uMap["shared_mode"] - 1] = 0;
+        row[uMap["seen_history"] - 1] = 1;
         row[uMap["scan_freq"] - 1] = 10;
         row[uMap["created_at"] - 1] = new Date();
         uTab.appendRow(row);
@@ -108,18 +110,22 @@ function getAvatarData(uuid, name) {
     const dMap = getHeaderMap(dailyTab);
     const dData = dailyTab.getDataRange().getValues();
 
-    const radar = [];
-    for (let i = dData.length - 1; i > 0 && radar.length < 50; i--) {
-        if (dData[i][dMap["owner_uuid"] - 1] == uuid) {
-            radar.push({
-                name: dData[i][dMap["target_name"] - 1],
-                key: dData[i][dMap["target_uuid"] - 1],
-                last_seen: dData[i][dMap["last_seen_time"] - 1],
-                dist: dData[i][dMap["last_dist"] - 1] || 0,
-                first_seen: dData[i][dMap["first_seen_time"] - 1] || dData[i][dMap["last_seen_time"] - 1]
-            });
+        const radar = [];
+        for (let i = dData.length - 1; i > 0 && radar.length < 50; i--) {
+            if (dData[i][dMap["owner_uuid"] - 1] == uuid) {
+                // Combine Date + Time to create a valid JS Date for the HUD (Backwards compatible)
+                const dateStr = Utilities.formatDate(dData[i][dMap["date"] - 1], "GMT", "yyyy-MM-dd");
+                const timeStr = dData[i][dMap["last_seen_time"] - 1];
+                const fullDateTime = new Date(dateStr + " " + timeStr);
+
+                radar.push({
+                    name: dData[i][dMap["target_name"] - 1],
+                    key: dData[i][dMap["target_uuid"] - 1],
+                    last_seen: fullDateTime.getTime(), // SEND NUMBER (MS) TO HUD
+                    dist: dData[i][dMap["last_dist"] - 1] || 0
+                });
+            }
         }
-    }
 
     const conTab = ss.getSheetByName("Contacts");
     const cMap = getHeaderMap(conTab);
@@ -203,21 +209,26 @@ function bulkLogData(uuid, records) {
             for (let i = 0; i < dailyData.length; i++) { if (dailyData[i][0] == summaryId) { dRow = i; break; } }
 
             if (dRow == -1) {
+                const now = new Date();
+                const timeOnly = Utilities.formatDate(now, "GMT", "HH:mm:ss");
+
                 const row = new Array(dailyTab.getLastColumn()).fill("");
                 row[dMap["summary_id"] - 1] = summaryId;
                 row[dMap["owner_uuid"] - 1] = owner;
                 row[dMap["target_uuid"] - 1] = p.target_uuid;
                 row[dMap["target_name"] - 1] = p.target_name;
                 row[dMap["date"] - 1] = today;
+                row[dMap["is_protected"] - 1] = 0;
                 row[dMap["total_scans"] - 1] = 1;
-                row[dMap["last_seen_time"] - 1] = new Date();
+                row[dMap["last_seen_time"] - 1] = timeOnly;
                 row[dMap["last_dist"] - 1] = p.dist || 0;
-                row[dMap["first_seen_time"] - 1] = new Date();
+                row[dMap["first_seen_time"] - 1] = timeOnly;
                 dailyTab.appendRow(row);
                 dailyData.push(row);
             } else {
+                const timeOnly = Utilities.formatDate(new Date(), "GMT", "HH:mm:ss");
                 dailyTab.getRange(dRow + 1, dMap["total_scans"]).setValue(parseInt(dailyData[dRow][dMap["total_scans"] - 1]) + 1);
-                dailyTab.getRange(dRow + 1, dMap["last_seen_time"]).setValue(new Date());
+                dailyTab.getRange(dRow + 1, dMap["last_seen_time"]).setValue(timeOnly);
                 dailyTab.getRange(dRow + 1, dMap["last_dist"]).setValue(p.dist || 0);
             }
 
