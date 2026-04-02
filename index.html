@@ -44,6 +44,7 @@
             font-size: 20px;
             font-weight: bold;
             margin-top: 10px;
+            margin-right: 15px;
         }
 
         /* Item Card (Uses float instead of flex) */
@@ -87,15 +88,38 @@
         }
 
         .actions-btn {
-            float: right;
             background: transparent;
             color: #38bdf8;
             border: 1px solid #38bdf8;
             border-radius: 8px;
             padding: 10px 20px;
             font-size: 20px;
-            margin-top: 10px;
             cursor: pointer;
+        }
+
+        .btn-float-right {
+            float: right;
+            margin-top: 10px;
+        }
+        
+        .btn-full {
+            float: none;
+            width: 100%;
+            display: block;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            width: 100%; 
+            box-sizing: border-box; 
+            background: #2a2a35; 
+            border: 1px solid #444; 
+            color: #fff; 
+            padding: 15px; 
+            font-size: 18px; 
+            border-radius: 8px; 
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -103,42 +127,125 @@
 <body>
     <div class="container">
 
+        <!-- HEADER AREA -->
         <div class="header">
             <h1>SMART RADAR</h1>
-            <div class="status">● Online</div>
+            <button id="settingsBtn" class="actions-btn" style="float: right; margin-top: 0; padding: 7px 15px;">⚙️ Setup</button>
+            <div id="topStatus" class="status">● Offline</div>
         </div>
 
-        <div id="radarList">
-            <!-- Demo Users -->
+        <!-- VIEW: RADAR LIST -->
+        <div id="radarView">
             <div class="item-card">
-                <div class="avatar-img">A</div>
+                <div class="avatar-img">D</div>
                 <div class="user-info">
-                    <div class="name">Alice Resident</div>
-                    <div class="distance">15m away</div>
+                    <div class="name">Doctor Resident (dr22)</div>
+                    <div class="distance">Loading cloud data...</div>
                 </div>
-                <button class="actions-btn">Profile</button>
+                <button class="actions-btn btn-float-right">Profile</button>
             </div>
+        </div>
 
+        <!-- VIEW: SETTINGS / REGISTRATION -->
+        <div id="settingsView" style="display: none;">
             <div class="item-card">
-                <div class="avatar-img">B</div>
-                <div class="user-info">
-                    <div class="name">Bob Resident</div>
-                    <div class="distance">22m away</div>
+                <div class="name" style="margin-bottom: 10px; color: #38bdf8;">Database Connection</div>
+                <div style="font-size: 18px; color: #aaa; margin-bottom: 20px; line-height: 1.4;">
+                    Paste your personal Google Sheet link below to connect this HUD to your Cloud CRM Database.
                 </div>
-                <button class="actions-btn">Profile</button>
+                
+                <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/...">
+                <button id="registerBtn" class="actions-btn btn-full" style="background: #38bdf8; color: #09090b; font-weight: bold; border: none;">Connect Database</button>
+                <div id="registerMsg" style="margin-top: 15px; font-size: 18px; color: #4ade80; text-align: center;"></div>
             </div>
-
-            <div class="item-card" style="opacity: 0.6;">
-                <div class="avatar-img">C</div>
-                <div class="user-info">
-                    <div class="name">Charlie Resident</div>
-                    <div class="distance">45m away</div>
-                </div>
-                <button class="actions-btn">Profile</button>
-            </div>
+            
+            <button id="backBtn" class="actions-btn btn-full" style="color: #888; border-color: #444;">← Back to Radar</button>
         </div>
 
     </div>
+
+    <!-- MAIN LOGIC -->
+    <script>
+        // ==========================================
+        // 1. IMPORTANT: PASTE YOUR APP SCRIPT URL HERE
+        // ==========================================
+        const MASTER_ENGINE_URL = "YOUR_GOOGLE_APP_SCRIPT_URL_HERE";
+
+        // Extract the user's UUID from the URL parameter we set in LSL!
+        const urlParams = new URLSearchParams(window.location.search);
+        const userUUID = urlParams.get('uuid');
+
+        // ==========================================
+        // 2. UI NAVIGATION LOGIC
+        // ==========================================
+        const radarView = document.getElementById('radarView');
+        const settingsView = document.getElementById('settingsView');
+
+        document.getElementById('settingsBtn').onclick = function() {
+            radarView.style.display = 'none';
+            settingsView.style.display = 'block';
+        };
+
+        document.getElementById('backBtn').onclick = function() {
+            settingsView.style.display = 'none';
+            radarView.style.display = 'block';
+        };
+
+        // ==========================================
+        // 3. API LOGIC: REGISTER USER'S SHEET
+        // ==========================================
+        document.getElementById('registerBtn').onclick = async function() {
+            if (!userUUID) {
+                alert("Error: Missing UUID! You must run this inside Second Life.");
+                return;
+            }
+
+            const sheetUrl = document.getElementById('sheetUrlInput').value;
+            const msgBox = document.getElementById('registerMsg');
+            
+            if (!sheetUrl) {
+                msgBox.style.color = "#ef4444";
+                msgBox.innerText = "Please paste your sheet URL!";
+                msgBox.style.display = "block";
+                return;
+            }
+
+            // Connecting state
+            this.innerText = "Connecting...";
+            msgBox.style.color = "#38bdf8";
+            msgBox.innerText = "Reaching Master Engine...";
+            msgBox.style.display = "block";
+
+            try {
+                // Call the API (action=register)
+                const formData = new FormData();
+                formData.append('action', 'register');
+                formData.append('uuid', userUUID);
+                formData.append('sheetUrl', sheetUrl);
+                // (Note: we didn't pass name here because we don't have it natively in JS, but LSL does!)
+
+                const response = await fetch(MASTER_ENGINE_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    msgBox.style.color = "#4ade80";
+                    msgBox.innerText = "Success! Database Connected!";
+                    this.innerText = "Connected";
+                } else {
+                    throw new Error(result.message);
+                }
+
+            } catch (err) {
+                msgBox.style.color = "#ef4444";
+                msgBox.innerText = "Error: " + err.message;
+                this.innerText = "Try Again";
+            }
+        };
+    </script>
 </body>
 
 </html>
