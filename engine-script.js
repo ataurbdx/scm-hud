@@ -179,61 +179,68 @@ function syncDatabase(ss) {
 // ---------------------------------------------------------
 
 function bulkLogData(uuid, records) {
-    const ss = SpreadsheetApp.openById(getUserSheetId(uuid));
-    const dailyTab = ss.getSheetByName("Seen_Daily");
-    const dMap = getHeaderMap(dailyTab);
-    const dailyData = dailyTab.getDataRange().getValues();
+    try {
+        const sheetId = getUserSheetId(uuid);
+        if (!sheetId) return ContentService.createTextOutput("LOG_ERROR|NOT_REGISTERED");
 
-    const encTab = ss.getSheetByName("Encounters");
-    const eMap = getHeaderMap(encTab);
-    const encData = encTab.getDataRange().getValues();
+        const ss = SpreadsheetApp.openById(sheetId);
+        const dailyTab = ss.getSheetByName("Seen_Daily");
+        const dMap = getHeaderMap(dailyTab);
+        const dailyData = dailyTab.getDataRange().getValues();
 
-    const today = Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd");
+        const encTab = ss.getSheetByName("Encounters");
+        const eMap = getHeaderMap(encTab);
+        const encData = encTab.getDataRange().getValues();
 
-    records.forEach(p => {
-        const owner = p.owner || uuid;
-        const summaryId = owner + "_" + p.target_uuid + "_" + today;
+        const today = Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd");
 
-        // Daily Summary Update
-        let dRow = -1;
-        for (let i = 0; i < dailyData.length; i++) { if (dailyData[i][0] == summaryId) { dRow = i; break; } }
+        records.forEach(p => {
+            const owner = p.owner || uuid;
+            const summaryId = owner + "_" + p.target_uuid + "_" + today;
 
-        if (dRow == -1) {
-            const row = new Array(dailyTab.getLastColumn()).fill("");
-            row[dMap["summary_id"] - 1] = summaryId;
-            row[dMap["owner_uuid"] - 1] = owner;
-            row[dMap["target_uuid"] - 1] = p.target_uuid;
-            row[dMap["target_name"] - 1] = p.target_name;
-            row[dMap["date"] - 1] = today;
-            row[dMap["total_scans"] - 1] = 1;
-            row[dMap["last_seen_time"] - 1] = new Date();
-            row[dMap["last_dist"] - 1] = p.dist || 0;
-            row[dMap["first_seen_time"] - 1] = new Date();
-            dailyTab.appendRow(row);
-            dailyData.push(row);
-        } else {
-            dailyTab.getRange(dRow + 1, dMap["total_scans"]).setValue(parseInt(dailyData[dRow][dMap["total_scans"] - 1]) + 1);
-            dailyTab.getRange(dRow + 1, dMap["last_seen_time"]).setValue(new Date());
-            dailyTab.getRange(dRow + 1, dMap["last_dist"]).setValue(p.dist || 0);
-        }
+            // Daily Summary Update
+            let dRow = -1;
+            for (let i = 0; i < dailyData.length; i++) { if (dailyData[i][0] == summaryId) { dRow = i; break; } }
 
-        // Encounter Spot Update
-        let eRow = -1;
-        for (let i = 0; i < encData.length; i++) { if (encData[i][0] == summaryId && encData[i][eMap["sim_name"] - 1] == p.sim) { eRow = i; break; } }
-        if (eRow == -1) {
-            const row = new Array(encTab.getLastColumn()).fill("");
-            row[eMap["summary_id"] - 1] = summaryId;
-            row[eMap["timestamp"] - 1] = new Date();
-            row[eMap["sim_name"] - 1] = p.sim;
-            row[eMap["sim_pos"] - 1] = p.pos;
-            row[eMap["parcel_name"] - 1] = p.parcel;
-            encTab.appendRow(row);
-        } else {
-            encTab.getRange(eRow + 1, eMap["timestamp"]).setValue(new Date());
-            encTab.getRange(eRow + 1, eMap["sim_pos"]).setValue(p.pos);
-        }
-    });
-    return ContentService.createTextOutput("BULK_SUCCESS");
+            if (dRow == -1) {
+                const row = new Array(dailyTab.getLastColumn()).fill("");
+                row[dMap["summary_id"] - 1] = summaryId;
+                row[dMap["owner_uuid"] - 1] = owner;
+                row[dMap["target_uuid"] - 1] = p.target_uuid;
+                row[dMap["target_name"] - 1] = p.target_name;
+                row[dMap["date"] - 1] = today;
+                row[dMap["total_scans"] - 1] = 1;
+                row[dMap["last_seen_time"] - 1] = new Date();
+                row[dMap["last_dist"] - 1] = p.dist || 0;
+                row[dMap["first_seen_time"] - 1] = new Date();
+                dailyTab.appendRow(row);
+                dailyData.push(row);
+            } else {
+                dailyTab.getRange(dRow + 1, dMap["total_scans"]).setValue(parseInt(dailyData[dRow][dMap["total_scans"] - 1]) + 1);
+                dailyTab.getRange(dRow + 1, dMap["last_seen_time"]).setValue(new Date());
+                dailyTab.getRange(dRow + 1, dMap["last_dist"]).setValue(p.dist || 0);
+            }
+
+            // Encounter Spot Update
+            let eRow = -1;
+            for (let i = 0; i < encData.length; i++) { if (encData[i][0] == summaryId && encData[i][eMap["sim_name"] - 1] == p.sim) { eRow = i; break; } }
+            if (eRow == -1) {
+                const row = new Array(encTab.getLastColumn()).fill("");
+                row[eMap["summary_id"] - 1] = summaryId;
+                row[eMap["timestamp"] - 1] = new Date();
+                row[eMap["sim_name"] - 1] = p.sim;
+                row[eMap["sim_pos"] - 1] = p.pos;
+                row[eMap["parcel_name"] - 1] = p.parcel;
+                encTab.appendRow(row);
+            } else {
+                encTab.getRange(eRow + 1, eMap["timestamp"]).setValue(new Date());
+                encTab.getRange(eRow + 1, eMap["sim_pos"]).setValue(p.pos);
+            }
+        });
+        return ContentService.createTextOutput("BULK_SUCCESS");
+    } catch (e) {
+        return ContentService.createTextOutput("LOG_ERROR|" + e.toString());
+    }
 }
 
 // ---------------------------------------------------------
@@ -248,12 +255,23 @@ function getHeaderMap(sheet) {
 }
 
 function syncUser(uuid, name) {
-    const ss = SpreadsheetApp.openById(getUserSheetId(uuid));
-    const uTab = ss.getSheetByName("Users");
-    const uMap = getHeaderMap(uTab);
-    const data = uTab.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) { if (data[i][uMap["user_uuid"] - 1] == uuid) return ContentService.createTextOutput("USER_SYNCED|" + (data[i][uMap["scan_freq"] - 1] || 10)); }
-    return ContentService.createTextOutput("USER_SYNCED|10");
+    try {
+        const sheetId = getUserSheetId(uuid);
+        if (!sheetId) return ContentService.createTextOutput("USER_SYNCED|10");
+        
+        const ss = SpreadsheetApp.openById(sheetId);
+        const uTab = ss.getSheetByName("Users");
+        if (!uTab) return ContentService.createTextOutput("USER_SYNCED|10");
+        
+        const uMap = getHeaderMap(uTab);
+        const data = uTab.getDataRange().getValues();
+        for (let i = 1; i < data.length; i++) { 
+            if (data[i][uMap["user_uuid"] - 1] == uuid) return ContentService.createTextOutput("USER_SYNCED|" + (data[i][uMap["scan_freq"] - 1] || 10)); 
+        }
+        return ContentService.createTextOutput("USER_SYNCED|10");
+    } catch (e) {
+        return ContentService.createTextOutput("USER_SYNCED|10"); // Always fallback to 10s on error
+    }
 }
 
 function getUserSheetId(uuid) {

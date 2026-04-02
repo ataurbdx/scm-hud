@@ -93,15 +93,19 @@ default
         llSetColor(<1,1,1>, HUD_FACE);
         llScaleTexture(1.0, 1.0, HUD_FACE);
         
+        llOwnerSay("SCM HUD Starting... Checking Cloud Link.");
+
         // 2. Load the Web Interface
         refreshUI();
 
-        // 3. Sync with Cloud to get custom settings (like scan frequency)
+        // 3. Setup Initial Radar
+        RADAR_ACTIVE = TRUE;
+        llSetTimerEvent(SCAN_INTERVAL);
+        doRadarScan(); // IMMEDIATE FIRST SCAN
+
+        // 4. Sync with Cloud to get custom settings
         string body = "action=sync_user&uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(llGetUsername(llGetOwner()));
         llHTTPRequest(CLOUD_URL, [HTTP_METHOD, "POST", HTTP_MIMETYPE, "application/x-www-form-urlencoded", HTTP_VERIFY_CERT, FALSE], body);
-        
-        // 4. Initial Timer (Radar starts after sync or failsafe 10s)
-        llSetTimerEvent(10.0);
     }
 
     http_response(key id, integer status, list meta, string body)
