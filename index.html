@@ -159,12 +159,13 @@
     <div class="container">
 
         <!-- NAVIGATION (Sticky) -->
-        <div id="mainNav" class="nav-tabs">
+        <nav id="mainNav" class="nav-tabs">
             <button class="tab-btn active" onclick="showTab('nearby')">Nearby</button>
             <button class="tab-btn" onclick="showTab('history')">History</button>
             <button class="tab-btn" onclick="showTab('contacts')">Contacts</button>
             <button class="tab-btn" onclick="showTab('settings')">Settings</button>
-        </div>
+        </nav>
+        <div id="syncStatus" style="font-size: 10px; color: #71717a; text-align: center; padding: 4px; border-bottom: 1px solid #27272a;">Connecting...</div>
 
         <!-- VIEWS -->
         <div id="loadingView" class="view active">
@@ -222,8 +223,18 @@
             try {
                 const response = await fetch(`${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}&name=${encodeURIComponent(userName)}`);
                 const result = await response.json();
-                if (result.status === "success") renderData(result.data, result.server_time); else showView('welcomeView');
+                if (result.status === "success") {
+                    renderData(result.data, result.server_time);
+                    updateSyncTime();
+                } else {
+                    showView('welcomeView');
+                }
             } catch (err) { console.error(err); }
+        }
+
+        function updateSyncTime() {
+            const el = document.getElementById('syncStatus');
+            if (el) el.innerText = "Synced: " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
         }
 
         function showView(viewId) {

@@ -64,7 +64,7 @@ function registerUser(uuid, name, sheetUrl) {
         row[uMap["user_uuid"] - 1] = uuid;
         row[uMap["user_name"] - 1] = name || "Unknown";
         row[uMap["theme"] - 1] = "Blue";
-        row[uMap["scan_freq"] - 1] = 30;
+        row[uMap["scan_freq"] - 1] = 10;
         row[uMap["created_at"] - 1] = new Date();
         uTab.appendRow(row);
     }
@@ -79,7 +79,7 @@ function registerUser(uuid, name, sheetUrl) {
     for (let i = 1; i < mData.length; i++) {
         if (mData[i][0] === uuid) { reg.getRange(i + 1, 2).setValue(sheetId); mExists = true; break; }
     }
-    if (!mExists) reg.appendRow([uuid, sheetId, new Date(), 30]);
+    if (!mExists) reg.appendRow([uuid, sheetId, new Date(), 10]);
 
     return jsonResponse({ status: "success", message: "Registered!" });
 }
@@ -252,8 +252,8 @@ function syncUser(uuid, name) {
     const uTab = ss.getSheetByName("Users");
     const uMap = getHeaderMap(uTab);
     const data = uTab.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) { if (data[i][uMap["user_uuid"] - 1] == uuid) return ContentService.createTextOutput("USER_SYNCED|" + (data[i][uMap["scan_freq"] - 1] || 30)); }
-    return ContentService.createTextOutput("USER_SYNCED|30");
+    for (let i = 1; i < data.length; i++) { if (data[i][uMap["user_uuid"] - 1] == uuid) return ContentService.createTextOutput("USER_SYNCED|" + (data[i][uMap["scan_freq"] - 1] || 10)); }
+    return ContentService.createTextOutput("USER_SYNCED|10");
 }
 
 function getUserSheetId(uuid) {

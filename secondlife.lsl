@@ -13,7 +13,7 @@ string CLOUD_URL   = "https://script.google.com/macros/s/AKfycbxmP0JWumHog423X-D
 integer HUD_FACE   = 4;
 integer FRESH_LOAD = TRUE;
 
-float   SCAN_INTERVAL = 20.0;
+float   SCAN_INTERVAL = 10.0;
 integer RADAR_ACTIVE  = FALSE;
 
 // --- CORE RADAR LOGIC ---
@@ -113,13 +113,12 @@ default
             {
                 list resp = llParseString2List(body, ["|"], []);
                 float freq = (float)llList2String(resp, 1);
-                if (freq < 10.0) freq = 30.0; // Minimum 10s safety
+                if (freq < 10.0) freq = 30.0;
                 
                 SCAN_INTERVAL = freq;
                 RADAR_ACTIVE = TRUE;
                 
                 llOwnerSay("SCM Radar Connected. Scanning every " + (string)((integer)SCAN_INTERVAL) + "s.");
-                doRadarScan();
                 llSetTimerEvent(SCAN_INTERVAL);
             }
         }
@@ -130,7 +129,6 @@ default
         if (RADAR_ACTIVE) {
             doRadarScan();
         } else {
-            // Failsafe start if sync lagged
             RADAR_ACTIVE = TRUE;
             llSetTimerEvent(SCAN_INTERVAL);
             doRadarScan();
