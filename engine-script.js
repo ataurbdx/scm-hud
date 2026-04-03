@@ -29,16 +29,24 @@ function handleRequest(e) {
     try {
         const action = e.parameter.action;
         const uuid = e.parameter.uuid || e.parameter.owner;
-        if (!uuid) throw new Error("Missing UUID mapping.");
+        if (!uuid) return jsonResponse({ status: "error", message: "Missing UUID mapping." });
 
         if (action === "register") return registerUser(uuid, e.parameter.name, e.parameter.sheetUrl);
+
+        // --- SECURE DATA RETRIEVAL ---
+        if (action === "get_data") {
+            const sheetId = getUserSheetId(uuid);
+            if (!sheetId) return jsonResponse({ status: "unregistered" });
+            return getAvatarData(uuid, e.parameter.name, e.parameter.date, sheetId);
+        }
+
         if (action === "bulk_log") return bulkLogData(uuid, JSON.parse(e.parameter.data || e.postData.contents));
         if (action === "sync_user") return syncUser(uuid, e.parameter.name);
-        if (action === "get_data") return getAvatarData(uuid, e.parameter.name, e.parameter.date);
 
-        throw new Error("Invalid Action");
+        throw new Error("Invalid Action: " + action);
     } catch (error) {
-        return jsonResponse({ status: "error", message: error.toString() });
+        console.error("Critical Engine Error: " + error.toString());
+        return jsonResponse({ status: "error", message: "Engine Failure: " + error.toString() });
     }
 }
 
@@ -73,13 +81,13 @@ function registerUser(uuid, name, sheetUrl) {
     }
 
     // Registry Update
-  const master = SpreadsheetApp.getActiveSpreadsheet();
-  let reg = master.getSheetByName(MASTER_REGISTRY_NAME) || master.insertSheet(MASTER_REGISTRY_NAME);
-  if (reg.getLastRow() === 0) {
-    reg.appendRow(["Avatar UUID", "Google Sheet ID", "Date Registered", "Frequency"]);
-    reg.getRange(1, 1, 1, 4).setFontWeight("bold").setBackground("#cfe2f3");
-    reg.setFrozenRows(1); // FREEZE HEADER (FRIDGE)
-  }
+    const master = SpreadsheetApp.getActiveSpreadsheet();
+    let reg = master.getSheetByName(MASTER_REGISTRY_NAME) || master.insertSheet(MASTER_REGISTRY_NAME);
+    if (reg.getLastRow() === 0) {
+        reg.appendRow(["Avatar UUID", "Google Sheet ID", "Date Registered", "Frequency"]);
+        reg.getRange(1, 1, 1, 4).setFontWeight("bold").setBackground("#cfe2f3");
+        reg.setFrozenRows(1); // FREEZE HEADER (FRIDGE)
+    }
 
     const mData = reg.getDataRange().getValues();
     let mExists = false;
@@ -91,28 +99,34 @@ function registerUser(uuid, name, sheetUrl) {
     return jsonResponse({ status: "success", message: "Registered!" });
 }
 
-function getAvatarData(uuid, name, inputDate) {
-    const sheetId = getUserSheetId(uuid);
+function getAvatarData(uuid, name, inputDate, existingSheetId) {
+    const sheetId = existingSheetId || getUserSheetId(uuid);
+    if (!sheetId) return jsonResponse({ status: "unregistered" });
+
     const ss = SpreadsheetApp.openById(sheetId);
-    syncDatabase(ss); // Runs on every HUD attach to keep user updated
+    syncDatabase(ss); // Self-healing: Creates missing tabs/columns
 
     // REPAIR USER NAME (Fixes the "Unknown" user bug automatically)
     if (name && name !== "Unknown") {
         const uTab = ss.getSheetByName("Users");
-        const uMap = getHeaderMap(uTab);
-        const uData = uTab.getDataRange().getValues();
-        for (let i = 1; i < uData.length; i++) {
-            if (uData[i][uMap["user_uuid"] - 1] == uuid) {
-                if (uData[i][uMap["user_name"] - 1] == "Unknown") {
-                    uTab.getRange(i + 1, uMap["user_name"]).setValue(name);
+        if (uTab) {
+            const uMap = getHeaderMap(uTab);
+            const uData = uTab.getDataRange().getValues();
+            for (let i = 1; i < uData.length; i++) {
+                if (uData[i][uMap["user_uuid"] - 1] == uuid) {
+                    if (uData[i][uMap["user_name"] - 1] == "Unknown") {
+                        uTab.getRange(i + 1, uMap["user_name"]).setValue(name);
+                    }
+                    break;
                 }
-                break;
             }
         }
     }
 
     const requestedDate = inputDate || Utilities.formatDate(new Date(), SL_TZ, "yyyy-MM-dd");
     const dailyTab = ss.getSheetByName("Seen_Daily");
+    if (!dailyTab) return jsonResponse({ status: "error", message: "Database Error: 'Seen_Daily' tab missing." });
+
     const dMap = getHeaderMap(dailyTab);
     const dData = dailyTab.getDataRange().getValues();
 
@@ -121,11 +135,11 @@ function getAvatarData(uuid, name, inputDate) {
     for (let i = dData.length - 1; i > 0 && radar.length < 100; i--) {
         const rawCellValue = dData[i][dMap["date"] - 1];
         if (!rawCellValue) continue;
-        
+
         // Robust Date Conversion: Handle both Date objects and strings
         const rowDate = Utilities.formatDate(new Date(rawCellValue), SL_TZ, "yyyy-MM-dd");
-        
-        if (dData[i][dMap["owner_uuid"] - 1] == uuid && rowDate === requestedDate) {
+
+        if (dData[i][dMap["owner_uuid"] - 1] == uuid) {
             // Combine Date + Time using ISO format (T...Z) for 100% GMT parsing
             const lastTimeStr = padTime(dData[i][dMap["last_seen_time"] - 1]);
             const firstTimeStr = padTime(dData[i][dMap["first_seen_time"] - 1] || lastTimeStr);
@@ -141,6 +155,7 @@ function getAvatarData(uuid, name, inputDate) {
                 key: dData[i][dMap["target_uuid"] - 1],
                 first_seen: firstSeenMs,
                 last_seen: lastSeenMs,
+                date: rowDate,
                 dist: dData[i][dMap["last_dist"] - 1] || 0,
                 last_sim: dData[i][dMap["last_sim"] - 1] || "Unknown",
                 is_nearby: isNearby
@@ -149,18 +164,20 @@ function getAvatarData(uuid, name, inputDate) {
     }
 
     const conTab = ss.getSheetByName("Contacts");
-    const cMap = getHeaderMap(conTab);
-    const cData = conTab.getDataRange().getValues();
     const contacts = [];
-    for (let i = 1; i < cData.length; i++) {
-        if (cData[i][cMap["owner_uuid"] - 1] == uuid) {
-            contacts.push({ name: cData[i][cMap["contact_name"] - 1], key: cData[i][cMap["contact_uuid"] - 1], notes: cData[i][cMap["notes"] - 1] });
+    if (conTab) {
+        const cMap = getHeaderMap(conTab);
+        const cData = conTab.getDataRange().getValues();
+        for (let i = 1; i < cData.length; i++) {
+            if (cData[i][cMap["owner_uuid"] - 1] == uuid) {
+                contacts.push({ name: cData[i][cMap["contact_name"] - 1], key: cData[i][cMap["contact_uuid"] - 1], notes: cData[i][cMap["notes"] - 1] });
+            }
         }
     }
 
-    return jsonResponse({ 
-        status: "success", 
-        data: { radar, contacts }, 
+    return jsonResponse({
+        status: "success",
+        data: { radar, contacts },
         server_time: Date.now(),
         server_sl_date: Utilities.formatDate(new Date(), SL_TZ, "yyyy-MM-dd")
     });
@@ -294,22 +311,22 @@ function padTime(timeStr) {
     if (timeStr instanceof Date) return Utilities.formatDate(timeStr, "GMT", "HH:mm:ss");
     var parts = timeStr.toString().split(':');
     if (parts.length < 3) return timeStr;
-    return parts.map(function(p) { return p.toString().trim().padStart(2, '0'); }).join(':');
+    return parts.map(function (p) { return p.toString().trim().padStart(2, '0'); }).join(':');
 }
 
 function syncUser(uuid, name) {
     try {
         const sheetId = getUserSheetId(uuid);
         if (!sheetId) return ContentService.createTextOutput("USER_SYNCED|10");
-        
+
         const ss = SpreadsheetApp.openById(sheetId);
         const uTab = ss.getSheetByName("Users");
         if (!uTab) return ContentService.createTextOutput("USER_SYNCED|10");
-        
+
         const uMap = getHeaderMap(uTab);
         const data = uTab.getDataRange().getValues();
-        for (let i = 1; i < data.length; i++) { 
-            if (data[i][uMap["user_uuid"] - 1] == uuid) return ContentService.createTextOutput("USER_SYNCED|" + (data[i][uMap["scan_freq"] - 1] || 10)); 
+        for (let i = 1; i < data.length; i++) {
+            if (data[i][uMap["user_uuid"] - 1] == uuid) return ContentService.createTextOutput("USER_SYNCED|" + (data[i][uMap["scan_freq"] - 1] || 10));
         }
         return ContentService.createTextOutput("USER_SYNCED|10");
     } catch (e) {

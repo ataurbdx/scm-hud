@@ -164,11 +164,17 @@
             <button class="tab-btn" onclick="showTab('contacts')">Contacts</button>
             <button class="tab-btn" onclick="showTab('settings')">Settings</button>
         </nav>
-        <div id="syncStatus" style="font-size: 10px; color: #71717a; text-align: center; padding: 4px; border-bottom: 1px solid #27272a;">Connecting...</div>
+        <div id="syncStatus" style="font-size: 10px; color: #71717a; text-align: center; padding: 4px; border-bottom: 1px solid #27272a; display: flex; justify-content: center; align-items: center; gap: 8px;">
+            <span id="syncText">Connecting...</span>
+            <button onclick="checkStatus(true)" style="background:none; border:none; color:#38bdf8; cursor:pointer; font-size:12px; padding:0; display:flex;" title="Sync Now">🔄</button>
+        </div>
 
         <!-- VIEWS -->
         <div id="loadingView" class="view active">
-            Connecting to SCM Cloud...
+            <div style="text-align:center; margin-top:50px;">
+                <div class="loader"></div>
+                <div style="margin-top:20px; color:#71717a;">Connecting to SCM Cloud...</div>
+            </div>
         </div>
 
         <div id="welcomeView" class="view">
@@ -184,10 +190,6 @@
         </div>
 
         <div id="radarTab" class="view dashboard-tab">
-            <div style="padding: 10px 0; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                <div id="displayDate" style="font-size: 18px; font-weight: bold; color: #38bdf8;">Loading date...</div>
-                <input type="date" id="dateFilter" style="background:#18181b; color:#fff; border:1px solid #38bdf8; padding:5px; border-radius:4px; font-size:14px;" onchange="handleDateChange()">
-            </div>
             <div class="card"><div id="radarList"></div></div>
         </div>
 
@@ -198,10 +200,12 @@
         <div id="settingsTab" class="view dashboard-tab">
             <div class="card">
                 <h2 style="margin-top:0; color:#38bdf8;">Settings</h2>
+                <div style="margin-bottom:20px;">
+                    <p style="font-size:12px; color:#71717a;">Database: Registered</p>
+                </div>
                 <button class="btn" style="background:#ef4444; color:#fff;" onclick="showView('welcomeView')">Reset Database Connection</button>
             </div>
         </div>
-
     </div>
 
     <script>
@@ -213,74 +217,74 @@
 
         window.onload = () => { 
             if (userUUID) {
-                initDateFilter();
                 initHUD();
             } else {
-                document.getElementById('loadingView').innerHTML = "Run from SL HUD.";
+                document.getElementById('loadingView').innerHTML = `<div style="text-align:center; padding:50px; color:#ef4444;">Please run this HUD from Second Life.</div>`;
             }
         };
 
-        function initDateFilter() {
-            const input = document.getElementById('dateFilter');
-            // Estimate SL date (UTC-7/8) while waiting for server sync
-            const slEst = new Date(new Date().getTime() - (7 * 3600000)); 
-            const dateStr = slEst.toISOString().split('T')[0];
-            input.value = dateStr;
-            document.getElementById('displayDate').innerText = formatFullDate(dateStr);
-        }
-
-        function formatFullDate(dateStr) {
-            if (!dateStr) return "Select Date";
-            // Explicitly parse YYYY-MM-DD to avoid timezone shifts
-            const parts = dateStr.split('-');
-            const d = new Date(Date.UTC(parts[0], parts[1]-1, parts[2]));
-            const options = { day: 'numeric', month: 'long', year: 'numeric' };
-            const formatted = d.toLocaleDateString('en-GB', { ...options, timeZone: 'UTC' });
-            const fParts = formatted.split(' ');
-            if (fParts.length === 3) return `${fParts[0]} ${fParts[1]}, ${fParts[2]}`;
-            return formatted;
-        }
-
-        function handleDateChange() {
-            const dateStr = document.getElementById('dateFilter').value;
-            document.getElementById('displayDate').innerText = formatFullDate(dateStr);
-            checkStatus();
-        }
-
         async function initHUD() {
             await checkStatus();
-            if (!refreshInterval) refreshInterval = setInterval(checkStatus, 15000); // 15s for HUD stability
+            if (!refreshInterval) refreshInterval = setInterval(() => checkStatus(false), 15000); 
         }
 
-        async function checkStatus() {
+        async function checkStatus(isManual = false) {
             try {
-                const dateInput = document.getElementById('dateFilter');
-                const date = dateInput.value;
-                const response = await fetch(`${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}&name=${encodeURIComponent(userName)}&date=${date}`);
+                const statusEl = document.getElementById('syncText');
+                if (isManual) statusEl.innerText = "Syncing...";
+                
+                const response = await fetch(`${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}&name=${encodeURIComponent(userName)}`);
+                if (!response.ok) throw new Error("Server connection failed (HTTP " + response.status + ")");
+                
                 const result = await response.json();
+                
                 if (result.status === "success") {
-                    // Sync HUD to server's SL date if not already set or specifically requested
-                    if (result.server_sl_date && !date) {
-                        dateInput.value = result.server_sl_date;
-                        document.getElementById('displayDate').innerText = formatFullDate(result.server_sl_date);
-                    }
                     renderData(result.data, result.server_time);
                     updateSyncTime();
-                } else if (result.status === "error" && result.message.includes("Mapping")) {
+                } else if (result.status === "unregistered") {
                     showView('welcomeView');
+                    statusEl.innerText = "Registration Required";
+                } else if (result.status === "error") {
+                    showErrorInRadar(result.message);
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) { 
+                console.error(err);
+                showErrorInRadar("Connectivity Error: Could not reach Master Engine.");
+            }
+        }
+
+        function showErrorInRadar(msg) {
+            const list = document.getElementById('radarList');
+            if (list) {
+                list.innerHTML = `
+                    <div style="padding:40px 20px; text-align:center; color:#ef4444;">
+                        <div style="font-size:32px; margin-bottom:15px;">⚠️</div>
+                        <div style="font-weight:bold; margin-bottom:8px; color:#fff;">Connection Lost</div>
+                        <div style="font-size:12px; color:#71717a; line-height:1.5;">${msg}</div>
+                        <button class="btn" style="margin-top:20px; padding:8px 20px; font-size:11px;" onclick="checkStatus(true)">Try Reconnect</button>
+                    </div>
+                `;
+            }
+            const statusEl = document.getElementById('syncText');
+            if (statusEl) statusEl.innerText = "Status: Sync Error";
+            
+            // If we're on the loading screen, jump to radar to show the error
+            const currentView = document.querySelector('.view.active');
+            if (currentView.id === 'loadingView') showTab('radar');
         }
 
         function updateSyncTime() {
-            const el = document.getElementById('syncStatus');
-            if (el) el.innerText = "Cloud Sync: " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            const el = document.getElementById('syncText');
+            if (el) el.innerText = "Data Synced: " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
         }
 
         function showView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-            document.getElementById('mainNav').style.display = document.getElementById(viewId).classList.contains('dashboard-tab') ? 'block' : 'none';
+            const target = document.getElementById(viewId);
+            if (target) {
+                target.classList.add('active');
+                document.getElementById('mainNav').style.display = target.classList.contains('dashboard-tab') ? 'block' : 'none';
+            }
         }
 
         function showTab(tabName) {
@@ -292,27 +296,28 @@
             const currentView = document.querySelector('.view.active');
             if (currentView.id === 'loadingView' || currentView.id === 'welcomeView') showTab('radar');
             
-            const radar = data.radar || [];
-            renderRadarList(radar);
+            renderRadarList(data.radar || []);
             renderContacts(data.contacts || []);
         }
 
         function renderRadarList(items) {
             const list = document.getElementById('radarList');
-            if (items.length === 0) { list.innerHTML = `<div class="status-msg">No entries for this date.</div>`; return; }
+            if (items.length === 0) { list.innerHTML = `<div class="status-msg">No scan history found for this user.</div>`; return; }
             
             list.innerHTML = items.map(p => {
                 const formatTime = (ts) => ts ? new Date(ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "??:??";
                 const first = formatTime(p.first_seen);
                 const last = formatTime(p.last_seen);
-                const statusBadge = p.is_nearby ? '<span style="background:#22c55e; color:#000; padding:2px 6px; border-radius:4px; font-size:10px; margin-left:8px; vertical-align:middle;">LIVE</span>' : '';
+                
+                const rowDate = p.date ? new Date(p.date + "T00:00:00Z").toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : "";
+                const statusBadge = p.is_nearby ? '<span style="background:#22c55e; color:#000; padding:2px 6px; border-radius:4px; font-size:10px; margin-left:8px; vertical-align:middle; font-weight:bold;">LIVE</span>' : '';
                 const location = p.last_sim && p.last_sim !== "Unknown" ? ` in ${p.last_sim}` : "";
                 
                 return `
                 <div class="item">
                     <div class="item-info">
                         <div class="item-name">${p.name} ${statusBadge}</div>
-                        <div class="item-meta">Seen: ${first} - ${last}${location} (${Math.round(p.dist || 0)}m)</div>
+                        <div class="item-meta">${rowDate} | ${first} - ${last}${location}</div>
                     </div>
                     <div class="item-actions">
                         <button class="action-icon" title="View Profile" onclick="openLink('about','${p.key}')">👤</button>
@@ -343,19 +348,28 @@
         async function handleRegister() {
             const sheetUrl = document.getElementById('sheetUrlInput').value;
             if (!sheetUrl) return;
-            document.getElementById('setupStatus').innerText = "Connecting...";
+            const btn = document.getElementById('registerBtn');
+            const status = document.getElementById('setupStatus');
+            
+            btn.disabled = true;
+            status.innerText = "Syncing Database Architecture...";
+            
             try {
                 const fd = new FormData();
                 fd.append('action', 'register'); fd.append('uuid', userUUID); fd.append('name', userName); fd.append('sheetUrl', sheetUrl);
                 const res = await fetch(MASTER_ENGINE_URL, { method: 'POST', body: fd });
                 const result = await res.json();
-                if (result.status === "success") initHUD(); else throw new Error(result.message);
-            } catch (err) { document.getElementById('setupStatus').innerText = "Error: " + err.message; }
+                if (result.status === "success") {
+                    status.innerText = "Success! Initializing Radar...";
+                    setTimeout(initHUD, 1000);
+                } else throw new Error(result.message);
+            } catch (err) { 
+                status.innerText = "Error: " + err.message;
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
-
 </html>
-</body>
 
 </html>

@@ -1,18 +1,11 @@
 // =========================================================================
-// SCM HUD - CORE RADAR & MEDIA SCRIPT (SaaS Edition)
-// =========================================================================
-// Features: 
-// - Automatic User Sync (Fetches scan frequency from Cloud)
-// - Professional Radar (Sends Username + Display Name + Location)
-// - Media on a Prim (MoAP) with Cache-Busting and UUID tracking
+// SCM HUD - PROFESSIONAL RADAR & MEDIA SCRIPT (Version 2.1)
 // =========================================================================
 
 string BROWSER_URL = "https://ataurbdx.github.io/scm-hud/";
 string CLOUD_URL   = "https://script.google.com/macros/s/AKfycbxmP0JWumHog423X-Dq8ZIEYtDoJagl2YCOAd1Lse2I4tyX8mzl2mytkI8Z9uj37OeX/exec";
 
 integer HUD_FACE   = 4;
-integer FRESH_LOAD = TRUE;
-
 float   SCAN_INTERVAL = 10.0;
 integer RADAR_ACTIVE  = FALSE;
 
@@ -36,7 +29,8 @@ doRadarScan()
         {
             string dName = llGetDisplayName(target);
             string uName = llGetUsername(target);
-            string fullName = dName + " (" + uName + ")";
+            string fullName = dName; // Professional clean name
+            if (uName != "Resident") fullName += " (" + uName + ")";
             
             vector pos = llList2Vector(llGetObjectDetails(target, [OBJECT_POS]), 0);
             float dist = llVecDist(pos, myPos);
@@ -60,25 +54,22 @@ doRadarScan()
     if (logged_count > 0) 
     {
         string body = "action=bulk_log&uuid=" + (string)llGetOwner() + "&data=" + llEscapeURL(bulk_data);
-        llHTTPRequest(CLOUD_URL, [HTTP_METHOD, "POST", HTTP_MIMETYPE, "application/x-www-form-urlencoded", HTTP_VERIFY_CERT, FALSE], body);
+        llHTTPRequest(CLOUD_URL, [HTTP_METHOD, "POST", HTTP_MIMETYPE, "application/x-www-form-urlencoded"], body);
     }
 }
 
-// --- INITIALIZE UI ---
 refreshUI()
 {
     // Build URL with UUID mapping, Username mapping, and Cache Buster
-    string final_url = BROWSER_URL + "?uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(llGetUsername(llGetOwner()));
-    if (FRESH_LOAD) {
-        final_url += "&v=" + (string)llRound(llFrand(9999999.0));
-    }
+    string final_url = BROWSER_URL + "?uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(llGetDisplayName(llGetOwner()));
+    final_url += "&v=" + (string)llRound(llFrand(999999.0));
     
     llSetPrimMediaParams(HUD_FACE, [
         PRIM_MEDIA_CURRENT_URL, final_url,
         PRIM_MEDIA_HOME_URL, final_url,
         PRIM_MEDIA_AUTO_PLAY, TRUE,
         PRIM_MEDIA_AUTO_SCALE, TRUE,
-        PRIM_MEDIA_CONTROLS, 1, 
+        PRIM_MEDIA_CONTROLS, 0, // 0 = Hide browser controls for a professional look
         PRIM_MEDIA_WIDTH_PIXELS, 1024,
         PRIM_MEDIA_HEIGHT_PIXELS, 1024
     ]);
@@ -91,61 +82,46 @@ default
         // 1. Setup Visuals
         llSetTexture(TEXTURE_TRANSPARENT, ALL_SIDES);
         llSetColor(<1,1,1>, HUD_FACE);
-        llScaleTexture(1.0, 1.0, HUD_FACE);
         
-        llOwnerSay("SCM HUD Starting... Checking Cloud Link.");
+        llOwnerSay("SCM Professional starting up...");
 
         // 2. Load the Web Interface
         refreshUI();
 
         // 3. Setup Initial Radar
-        RADAR_ACTIVE = TRUE;
         llSetTimerEvent(SCAN_INTERVAL);
         doRadarScan(); // IMMEDIATE FIRST SCAN
 
-        // 4. Sync with Cloud to get custom settings
-        string body = "action=sync_user&uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(llGetUsername(llGetOwner()));
-        llHTTPRequest(CLOUD_URL, [HTTP_METHOD, "POST", HTTP_MIMETYPE, "application/x-www-form-urlencoded", HTTP_VERIFY_CERT, FALSE], body);
+        // 4. Sync with Cloud to get custom frequency
+        string body = "action=sync_user&uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(llGetDisplayName(llGetOwner()));
+        llHTTPRequest(CLOUD_URL, [HTTP_METHOD, "POST", HTTP_MIMETYPE, "application/x-www-form-urlencoded"], body);
     }
 
     http_response(key id, integer status, list meta, string body)
     {
-        if (status == 200 || status == 302) 
+        if (status == 200) 
         {
-            // Handle User Sync Response
             if (llSubStringIndex(body, "USER_SYNCED") != -1) 
             {
                 list resp = llParseString2List(body, ["|"], []);
                 float freq = (float)llList2String(resp, 1);
-                if (freq < 10.0) freq = 30.0;
-                
+                if (freq < 10.0) freq = 10.0;
                 SCAN_INTERVAL = freq;
-                RADAR_ACTIVE = TRUE;
-                
-                llOwnerSay("SCM Radar Connected. Scanning every " + (string)((integer)SCAN_INTERVAL) + "s.");
                 llSetTimerEvent(SCAN_INTERVAL);
+                llOwnerSay("SCM Connected. Sync Frequency: " + (string)((integer)SCAN_INTERVAL) + "s.");
+            }
+            else if (llSubStringIndex(body, "LOG_ERROR") != -1)
+            {
+                llOwnerSay("Cloud Warning: " + body);
             }
         }
-    }
-
-    timer()
-    {
-        if (RADAR_ACTIVE) {
-            doRadarScan();
-        } else {
-            RADAR_ACTIVE = TRUE;
-            llSetTimerEvent(SCAN_INTERVAL);
-            doRadarScan();
+        else
+        {
+            llOwnerSay("SCM Error: Cloud server unreachable (HTTP " + (string)status + ")");
         }
     }
 
-    attach(key id) 
-    { 
-        if (id) llResetScript(); 
-    }
-    
-    changed(integer change)
-    {
-        if (change & CHANGED_OWNER) llResetScript();
-    }
+    timer() { doRadarScan(); }
+    attach(key id) { if (id) llResetScript(); }
+    changed(integer change) { if (change & CHANGED_OWNER) llResetScript(); }
 }
