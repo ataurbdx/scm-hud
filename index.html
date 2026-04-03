@@ -274,11 +274,24 @@
         <div id="settingsTab" class="view dashboard-tab">
             <div class="card">
                 <h2 style="margin-top:0; color:#38bdf8;">Settings</h2>
-                <div style="margin-bottom:20px;">
-                    <p style="font-size:12px; color:#71717a;">Database: Registered</p>
+                <div style="margin-bottom:25px; border-bottom: 1px solid #27272a; padding-bottom: 20px;">
+                    <label style="display:block; margin-bottom:10px; font-weight:600; color:#e4e4e7;">Radar Scan Frequency</label>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <select id="scanFreqInput" style="flex:1; background:#18181b; color:#fff; border:1px solid #3f3f46; border-radius:6px; padding:10px; font-size:16px;">
+                            <option value="5">Turbo (5 Seconds)</option>
+                            <option value="10">Standard (10 Seconds)</option>
+                            <option value="30">Eco (30 Seconds)</option>
+                            <option value="60">Sleep (60 Seconds)</option>
+                        </select>
+                        <button class="btn" style="width:auto; margin:0; padding:10px 20px;" onclick="saveSettings()">Save</button>
+                    </div>
+                    <p style="font-size:11px; color:#71717a; margin-top:8px;">Changes will be synced to your HUD in Second Life automatically.</p>
                 </div>
-                <button class="btn" style="background:#ef4444; color:#fff;" onclick="showView('welcomeView')">Reset
-                    Database Connection</button>
+                
+                <div style="margin-bottom:20px;">
+                    <p style="font-size:12px; color:#71717a;">Cloud Database: <span style="color:#22c55e">Healthy</span></p>
+                </div>
+                <button class="btn" style="background:#ef4444; color:#fff; font-size: 14px; padding: 10px;" onclick="showView('welcomeView')">Reset Connection</button>
             </div>
         </div>
     </div>
@@ -326,16 +339,21 @@
         };
 
         async function checkStatus(isManual = false) {
-            if (isSyncing) return; // DON'T SYNC IF ALREADY DOING IT
+            if (isSyncing) return;
             isSyncing = true;
+
+            const activeView = document.querySelector('.view.active');
+            let tabType = "radar";
+            if (activeView.id === "contactsTab") tabType = "contacts";
+            if (activeView.id === "settingsTab") { isSyncing = false; return; }
 
             try {
                 if (isManual) { 
-                    radarOffset = 0; hasMoreRadar = true; 
-                    document.getElementById('radarList').innerHTML = ""; 
-                    await fetchNextPage("radar", false);
+                    if (tabType === "radar") { radarOffset = 0; hasMoreRadar = true; document.getElementById('radarList').innerHTML = ""; }
+                    if (tabType === "contacts") { contactsOffset = 0; hasMoreContacts = true; document.getElementById('contactsList').innerHTML = ""; }
+                    await fetchNextPage(tabType, false);
                 } else {
-                    await fetchNextPage("radar", true); 
+                    await fetchNextPage(tabType, true); // SMART SYNC
                 }
             } catch (err) {
                 console.error(err);
@@ -354,7 +372,7 @@
 
             const offset = isSync ? 0 : (type === "radar" ? radarOffset : contactsOffset);
             const statusText = document.getElementById('syncText');
-            if (isSync) statusText.innerText = "Syncing...";
+            if (isSync) statusText.innerText = "Syncing " + type.charAt(0).toUpperCase() + type.slice(1) + "...";
 
             try {
                 const response = await fetch(`${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}&type=${type}&offset=${offset}&limit=10`);
@@ -364,23 +382,20 @@
                     if (type === "radar") {
                         const items = result.data.radar || [];
                         const contacts = result.data.contacts || [];
-                        
-                        if (isSync) {
-                            renderRadarItemsSmart(items, result.server_time, result.settings?.radar_scan_freq || 10, contacts);
-                        } else {
+                        if (isSync) renderRadarItemsSmart(items, result.server_time, result.settings?.radar_scan_freq || 10, contacts);
+                        else { 
                             renderRadarList(items, result.requested_date, result.server_time, result.settings?.radar_scan_freq || 10, contacts, true);
                             radarOffset += items.length;
                         }
-                        
                         hasMoreRadar = result.has_more_radar;
                         appSettings = result.settings || appSettings;
-                    } else {
+                    } else if (type === "contacts") {
                         renderContacts(result.data.contacts || [], !isSync);
-                        contactsOffset += (result.data.contacts || []).length;
+                        if (!isSync) contactsOffset += (result.data.contacts || []).length;
                         hasMoreContacts = result.has_more_contacts;
                     }
                     updateSyncTime();
-                    if (document.querySelector('.view.active').id === 'loadingView') showTab(type, false);
+                    if (document.querySelector('.view.active').id === 'loadingView') showTab('radar', false);
                 }
             } finally {
                 if (type === "radar") isLoadingRadar = false;
@@ -428,8 +443,28 @@
             if (updateHash) window.location.hash = tabName;
             
             // Lazy Load: Only fetch data if the list is empty
+            // Lazy Load: Only fetch data if the list is empty
             if (tabName === 'radar' && document.getElementById('radarList').children.length === 0) fetchNextPage('radar');
             if (tabName === 'contacts' && document.getElementById('contactsList').children.length === 0) fetchNextPage('contacts');
+        }
+
+        async function saveSettings() {
+            const freq = document.getElementById('scanFreqInput').value;
+            const statusText = document.getElementById('syncText');
+            statusText.innerText = "Saving Settings...";
+            
+            try {
+                const response = await fetch(`${MASTER_ENGINE_URL}?action=update_settings&uuid=${userUUID}&radar_scan_freq=${freq}`);
+                const result = await response.json();
+                if (result.status === "success") {
+                    statusText.innerText = "Settings Saved!";
+                    updateSyncTime();
+                    appSettings.radar_scan_freq = parseInt(freq);
+                }
+            } catch (err) {
+                console.error(err);
+                statusText.innerText = "Error Saving!";
+            }
         }
 
         function renderRadarList(items, dateShown, serverTime, scanFreq, contacts, append = false) {

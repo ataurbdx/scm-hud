@@ -84,6 +84,11 @@ function handleRequest(e) {
             const ss = SpreadsheetApp.openById(sheetId);
             return toggleContact(ss, uuid, dataMap.target_uuid, dataMap.target_name);
         }
+        if (action === "update_settings") {
+            const ss = SpreadsheetApp.openById(sheetId);
+            syncDatabase(ss);
+            return updateSettings(ss, uuid, dataMap.radar_scan_freq);
+        }
 
         throw new Error("Invalid Action: " + action);
     } catch (error) {
@@ -411,6 +416,24 @@ function syncUser(uuid, name) {
     } catch (e) {
         return ContentService.createTextOutput("USER_SYNCED|10");
     }
+}
+
+function updateSettings(ss, uuid, scanFreq) {
+    const uTab = ss.getSheetByName("Users");
+    const uMap = getHeaderMap(uTab);
+    const data = uTab.getDataRange().getValues();
+    let updated = false;
+
+    for (let i = 1; i < data.length; i++) {
+        if (data[i][uMap["user_uuid"] - 1] == uuid) {
+            uTab.getRange(i + 1, uMap["radar_scan_freq"]).setValue(scanFreq);
+            updated = true;
+            break;
+        }
+    }
+    
+    if (updated) return jsonResponse({ status: "success", message: "Settings Updated!" });
+    return jsonResponse({ status: "error", message: "User not found for update." });
 }
 
 // ---------------------------------------------------------
