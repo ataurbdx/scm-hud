@@ -68,6 +68,10 @@ function handleRequest(e) {
             return ContentService.createTextOutput("BULK_SUCCESS");
         }
         if (action === "sync_user") return syncUser(uuid, name);
+        if (action === "toggle_contact") {
+            const ss = SpreadsheetApp.openById(sheetId);
+            return toggleContact(ss, uuid, dataMap.target_uuid, dataMap.target_name);
+        }
 
         throw new Error("Invalid Action: " + action);
     } catch (error) {
@@ -444,6 +448,42 @@ function extractSheetId(url) {
     if (!url) return null;
     const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
     return match ? match[1] : url;
+}
+function toggleContact(ss, ownerUuid, targetUuid, targetName) {
+    const lock = LockService.getScriptLock();
+    try {
+        lock.waitLock(15000);
+        const conTab = ss.getSheetByName("Contacts") || ss.insertSheet("Contacts");
+        syncDatabase(ss); // Ensure header is correct
+        
+        const cMap = getHeaderMap(conTab);
+        const cData = conTab.getDataRange().getValues();
+        let foundRow = -1;
+
+        // Search for existing
+        for (let i = 1; i < cData.length; i++) {
+            if (cData[i][cMap["owner_uuid"] - 1] == ownerUuid && 
+                cData[i][cMap["contact_uuid"] - 1] == targetUuid) {
+                foundRow = i + 1;
+                break;
+            }
+        }
+
+        if (foundRow !== -1) {
+            conTab.deleteRow(foundRow);
+            return jsonResponse({ status: "success", state: "removed", message: "Contact Removed." });
+        } else {
+            const row = new Array(conTab.getLastColumn()).fill("");
+            row[cMap["owner_uuid"] - 1] = ownerUuid;
+            row[cMap["contact_uuid"] - 1] = targetUuid;
+            row[cMap["contact_name"] - 1] = targetName;
+            row[cMap["created_at"] - 1] = new Date();
+            conTab.appendRow(row);
+            return jsonResponse({ status: "success", state: "added", message: "Contact Saved!" });
+        }
+    } finally {
+        lock.releaseLock();
+    }
 }
 
 function jsonResponse(obj) {

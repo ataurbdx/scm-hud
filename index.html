@@ -368,12 +368,14 @@
         function renderData(result) {
             const currentView = document.querySelector('.view.active');
             if (currentView.id === 'loadingView' || currentView.id === 'welcomeView') showTab('radar');
-
-            renderRadarList(result.data.radar || [], result.requested_date || "Today", result.server_time, result.settings?.radar_scan_freq || 10);
-            renderContacts(result.data.contacts || []);
+            
+            // Pass contacts to radar list so we know who is already a friend
+            const contacts = result.data.contacts || [];
+            renderRadarList(result.data.radar || [], result.requested_date || "Today", result.server_time, result.settings?.radar_scan_freq || 10, contacts);
+            renderContacts(contacts);
         }
 
-        function renderRadarList(items, dateShown, serverTime, scanFreq) {
+        function renderRadarList(items, dateShown, serverTime, scanFreq, contacts) {
             const list = document.getElementById('radarList');
             const summary = `<div style="font-size:11px; color:#71717a; margin-bottom:15px; border-bottom:1px solid #27272a; padding-bottom:10px;">Showing history for: <b style="color:#38bdf8">${dateShown}</b></div>`;
 
@@ -400,13 +402,11 @@
                 const lastTs = new Date(p.last_seen).getTime();
                 const serverTs = new Date(serverTime).getTime();
 
-                // Bulletproof LIVE check: Within the scan window + 10s buffer
-                const isLive = (serverTs - lastTs) < ((scanFreq + 10) * 1000);
-                const nameColor = isLive ? "#22c55e" : "#fff"; 
-                
-                const rowDate = p.date ? new Date(p.date + "T00:00:00Z").toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : "";
-                const location = p.last_sim && p.last_sim !== "Unknown" ? ` in ${p.last_sim}` : "";
-                
+                // Contact Check
+                const isContact = contacts.some(c => c.key === p.key);
+                const contactIcon = isContact ? "🗑️" : "➕";
+                const contactTitle = isContact ? "Remove Contact" : "Add Contact";
+
                 return `
                 <div class="item">
                     <div class="item-info">
@@ -416,10 +416,42 @@
                     <div class="item-actions">
                         <button class="action-icon" title="View Profile" onclick="openLink('about','${p.key}')">👤</button>
                         <button class="action-icon" title="Send IM" onclick="openLink('im','${p.key}')">💬</button>
-                        <button class="action-icon add-btn" title="Add Contact">➕</button>
+                        <button class="action-icon add-btn" title="${contactTitle}" onclick="handleToggleContact('${p.key}', '${p.name}', this)">${contactIcon}</button>
                     </div>
                 </div>
             `}).join('');
+        }
+
+        async function handleToggleContact(targetUuid, targetName, btn) {
+            const originalIcon = btn.innerText;
+            btn.innerText = "⏳";
+            btn.style.opacity = "0.5";
+
+            try {
+                const fd = new FormData();
+                fd.append('action', 'toggle_contact');
+                fd.append('uuid', userUUID);
+                fd.append('target_uuid', targetUuid);
+                fd.append('target_name', targetName);
+
+                const res = await fetch(MASTER_ENGINE_URL, { method: 'POST', body: fd });
+                const result = await res.json();
+
+                if (result.status === "success") {
+                    btn.innerText = result.state === "added" ? "🗑️" : "➕";
+                    btn.title = result.state === "added" ? "Remove Contact" : "Add Contact";
+                    // Silently refresh to update the Contacts tab in the background
+                    checkStatus(false);
+                } else {
+                    btn.innerText = originalIcon;
+                    alert("Error: " + result.message);
+                }
+            } catch (err) {
+                btn.innerText = originalIcon;
+                console.error(err);
+            } finally {
+                btn.style.opacity = "1";
+            }
         }
 
         function renderContacts(items) {
