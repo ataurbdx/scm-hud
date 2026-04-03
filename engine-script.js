@@ -60,7 +60,7 @@ function handleRequest(e) {
         const sheetId = getUserSheetId(uuid);
         if (!sheetId) return jsonResponse({ status: "unregistered" });
 
-        if (action === "get_data") return getAvatarData(uuid, name, dataMap.date, sheetId);
+        if (action === "get_data") return getAvatarData(uuid, name, dataMap.date, sheetId, dataMap.type || "all", dataMap.limit || 10, dataMap.offset || 0);
         if (action === "bulk_log") {
             const ss = SpreadsheetApp.openById(sheetId);
             syncDatabase(ss);
@@ -133,117 +133,15 @@ function registerUser(uuid, name, sheetUrl) {
     return jsonResponse({ status: "success", message: "Registered!" });
 }
 
-function getAvatarData(uuid, name, inputDate, existingSheetId) {
-    const sheetId = existingSheetId || getUserSheetId(uuid);
-    if (!sheetId) return jsonResponse({ status: "unregistered" });
-
+function getAvatarData(uuid, name, inputDate, sheetId, type = "all", limit = 10, offset = 0) {
     const ss = SpreadsheetApp.openById(sheetId);
-    syncDatabase(ss);
-
-    // 1. REPAIR USER NAME (Fixes the "Unknown" user bug automatically)
-    if (name && name !== "Unknown") {
-        const uTab = ss.getSheetByName("Users");
-        if (uTab) {
-            const uMap = getHeaderMap(uTab);
-            const uData = uTab.getDataRange().getValues();
-            for (let i = 1; i < uData.length; i++) {
-                if (uData[i][uMap["user_uuid"] - 1] == uuid) {
-                    if (uData[i][uMap["user_name"] - 1] == "Unknown") {
-                        uTab.getRange(i + 1, uMap["user_name"]).setValue(name);
-                    }
-                }
-            }
-        }
-    }
-
-    // 2. CORE JOIN LOGIC (History + Encounters)
-    const historyTab = ss.getSheetByName("History");
-    const encTab = ss.getSheetByName("Encounters");
-    if (!historyTab || !encTab) return jsonResponse({ status: "error", message: "Database Error: Required tabs missing." });
-
-    const hMap = getHeaderMap(historyTab);
-    const hData = historyTab.getDataRange().getDisplayValues();
-    const eMap = getHeaderMap(encTab);
-    const eData = encTab.getDataRange().getValues();
-
+    if (!ss) return jsonResponse({ status: "error", message: "Unauthorized." });
+    
     const tz = ss.getSpreadsheetTimeZone();
     const requestedDate = inputDate || Utilities.formatDate(new Date(), tz, "yyyy-MM-dd");
+    const result = { status: "success", data: {}, server_time: Date.now() };
 
-    const radar = [];
-    const nowMs = Date.now();
-
-    // Group encounters by summary_id for faster lookup
-    const encountersByHistory = {};
-    for (let j = 1; j < eData.length; j++) {
-        const sId = eData[j][eMap["summary_id"] - 1];
-        if (!encountersByHistory[sId]) encountersByHistory[sId] = [];
-        encountersByHistory[sId].push({
-            start: new Date(eData[j][eMap["first_seen"] - 1]).getTime(),
-            end: new Date(eData[j][eMap["last_seen"] - 1]).getTime(),
-            dist: eData[j][eMap["dist"] - 1],
-            sim: eData[j][eMap["sim_name"] - 1]
-        });
-    }
-
-    for (let i = hData.length - 1; i > 0 && radar.length < 100; i--) {
-        const rowDateStr = hData[i][hMap["date"] - 1];
-        if (rowDateStr !== requestedDate) continue;
-
-        if (hData[i][hMap["owner_uuid"] - 1] == uuid) {
-            const summaryId = hData[i][hMap["summary_id"] - 1];
-            const relatedEnc = encountersByHistory[summaryId] || [];
-
-            if (relatedEnc.length === 0) continue;
-
-            // Calculate aggregate stats from all sessions today
-            let firstSeenMs = Infinity;
-            let lastSeenMs = -Infinity;
-            let lastDist = 0;
-            let lastSim = "Unknown";
-
-            relatedEnc.forEach(e => {
-                if (e.start < firstSeenMs) firstSeenMs = e.start;
-                if (e.end > lastSeenMs) {
-                    lastSeenMs = e.end;
-                    lastDist = e.dist;
-                    lastSim = e.sim;
-                }
-            });
-
-            const isNearby = (nowMs - lastSeenMs) < 900000; // 15 mins
-
-            radar.push({
-                name: hData[i][hMap["target_name"] - 1],
-                key: hData[i][hMap["target_uuid"] - 1],
-                first_seen: firstSeenMs,
-                last_seen: lastSeenMs,
-                date: rowDateStr,
-                dist: lastDist,
-                last_sim: lastSim,
-                is_nearby: isNearby
-            });
-        }
-    }
-
-    const conTab = ss.getSheetByName("Contacts");
-    const contacts = [];
-    if (conTab) {
-        const cMap = getHeaderMap(conTab);
-        const cData = conTab.getDataRange().getValues();
-        for (let k = 1; k < cData.length; k++) {
-            if (cData[k][cMap["owner_uuid"] - 1] == uuid) {
-                contacts.push({
-                    name: cData[k][cMap["contact_name"] - 1],
-                    key: cData[k][cMap["contact_uuid"] - 1],
-                    cat_ids: cData[k][cMap["cat_ids"] - 1],
-                    tag_ids: cData[k][cMap["tag_ids"] - 1],
-                    notes: cData[k][cMap["notes"] - 1]
-                });
-            }
-        }
-    }
-
-    // 3. FETCH SETTINGS
+    // 1. SETTINGS SYNC (Always Return)
     const uTab = ss.getSheetByName("Users");
     const uMap = getHeaderMap(uTab);
     const uData = uTab.getDataRange().getValues();
@@ -259,16 +157,95 @@ function getAvatarData(uuid, name, inputDate, existingSheetId) {
             break;
         }
     }
+    result.settings = settings;
 
-    return jsonResponse({
-        status: "success",
-        data: { radar, contacts },
-        settings: settings,
-        server_time: Date.now(),
-        server_sl_date: Utilities.formatDate(new Date(), tz, "yyyy-MM-dd"),
-        requested_date: requestedDate,
-        uuid: uuid
-    });
+    // 2. RADAR PAGINATION
+    if (type === "all" || type === "radar") {
+        const historyTab = ss.getSheetByName("History");
+        const encTab = ss.getSheetByName("Encounters");
+        if (historyTab && encTab) {
+            const hMap = getHeaderMap(historyTab);
+            const hData = historyTab.getDataRange().getDisplayValues();
+            const eMap = getHeaderMap(encTab);
+            const eData = encTab.getDataRange().getValues();
+
+            // Pre-process encounters
+            const encountersByHistory = {};
+            for (let j = 1; j < eData.length; j++) {
+                const sId = eData[j][eMap["summary_id"] - 1];
+                if (!encountersByHistory[sId]) encountersByHistory[sId] = [];
+                encountersByHistory[sId].push({
+                    start: new Date(eData[j][eMap["first_seen"] - 1]).getTime(),
+                    end: new Date(eData[j][eMap["last_seen"] - 1]).getTime(),
+                    dist: eData[j][eMap["dist"] - 1],
+                    sim: eData[j][eMap["sim_name"] - 1]
+                });
+            }
+
+            const radar = [];
+            let matchedCount = 0;
+            // Iterate backwards (newest history first)
+            for (let i = hData.length - 1; i > 0; i--) {
+                if (hData[i][hMap["date"] - 1] !== requestedDate) continue;
+                if (hData[i][hMap["owner_uuid"] - 1] != uuid) continue;
+
+                matchedCount++;
+                if (matchedCount <= offset) continue; // Skip until we reach our offset
+                if (radar.length >= limit) break; // Stop at limit
+
+                const summaryId = hData[i][hMap["summary_id"] - 1];
+                const relatedEnc = encountersByHistory[summaryId] || [];
+                if (relatedEnc.length === 0) continue;
+
+                let firstSeenMs = Infinity; let lastSeenMs = -Infinity; let lastDist = 0; let lastSim = "Unknown";
+                relatedEnc.forEach(e => {
+                    if (e.start < firstSeenMs) firstSeenMs = e.start;
+                    if (e.end > lastSeenMs) { lastSeenMs = e.end; lastDist = e.dist; lastSim = e.sim; }
+                });
+
+                radar.push({
+                    name: hData[i][hMap["target_name"] - 1],
+                    key: hData[i][hMap["target_uuid"] - 1],
+                    first_seen: firstSeenMs,
+                    last_seen: lastSeenMs,
+                    date: hData[i][hMap["date"] - 1],
+                    dist: lastDist,
+                    last_sim: lastSim
+                });
+            }
+            result.data.radar = radar;
+            result.has_more_radar = matchedCount > (offset + limit);
+        }
+    }
+
+    // 3. CONTACTS PAGINATION
+    if (type === "all" || type === "contacts") {
+        const conTab = ss.getSheetByName("Contacts");
+        if (conTab) {
+            const cMap = getHeaderMap(conTab);
+            const cData = conTab.getDataRange().getValues();
+            const contacts = [];
+            let matchedCount = 0;
+            for (let k = 1; k < cData.length; k++) {
+                if (cData[k][cMap["owner_uuid"] - 1] == uuid) {
+                    matchedCount++;
+                    if (matchedCount <= offset) continue;
+                    if (contacts.length >= limit) break;
+                    
+                    contacts.push({
+                        name: cData[k][cMap["contact_name"] - 1],
+                        key: cData[k][cMap["contact_uuid"] - 1],
+                        notes: cData[k][cMap["notes"] - 1]
+                    });
+                }
+            }
+            result.data.contacts = contacts;
+            result.has_more_contacts = matchedCount > (offset + limit);
+        }
+    }
+
+    result.requested_date = requestedDate;
+    return jsonResponse(result);
 }
 
 // ---------------------------------------------------------
