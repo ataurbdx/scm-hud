@@ -137,18 +137,27 @@ function getAvatarData(uuid, name, inputDate, existingSheetId) {
         if (!rawCellValue) continue;
 
         // Robust Date Conversion: Handle both Date objects and strings
-        const rowDate = Utilities.formatDate(new Date(rawCellValue), SL_TZ, "yyyy-MM-dd");
+        // We use GMT for Date objects to avoid midnight timezone shifts (2026-04-03 00:00:00 LA -> 2026-04-02 17:00:00)
+        let rowDateStr = "";
+        if (rawCellValue instanceof Date) {
+            rowDateStr = Utilities.formatDate(rawCellValue, "GMT", "yyyy-MM-dd");
+        } else {
+            rowDateStr = rawCellValue.toString().substring(0, 10);
+        }
+
+        // --- DATE FILTER: Skip rows that do not match the requested date ---
+        if (rowDateStr !== requestedDate) continue;
 
         if (dData[i][dMap["owner_uuid"] - 1] == uuid) {
-            // Combine Date + Time using ISO format (T...Z) for 100% GMT parsing
             const lastTimeStr = padTime(dData[i][dMap["last_seen_time"] - 1]);
             const firstTimeStr = padTime(dData[i][dMap["first_seen_time"] - 1] || lastTimeStr);
 
-            const lastSeenMs = new Date(rowDate + "T" + lastTimeStr + "Z").getTime();
-            const firstSeenMs = new Date(rowDate + "T" + firstTimeStr + "Z").getTime();
+            // Construct accurate UTC timestamps from SL strings by parsing in Pacific Time (SL_TZ)
+            const lastSeenMs = Utilities.parseDate(rowDateStr + " " + lastTimeStr, SL_TZ, "yyyy-MM-dd HH:mm:ss").getTime();
+            const firstSeenMs = Utilities.parseDate(rowDateStr + " " + firstTimeStr, SL_TZ, "yyyy-MM-dd HH:mm:ss").getTime();
 
-            // CLOUD-SIDE NEARBY FILTER (120 seconds) - Unified list indicator
-            const isNearby = (nowMs - lastSeenMs) < 120000;
+            // CLOUD-SIDE NEARBY FILTER (15 minutes leeway)
+            const isNearby = (nowMs - lastSeenMs) < 900000;
 
             radar.push({
                 name: dData[i][dMap["target_name"] - 1],
@@ -179,7 +188,9 @@ function getAvatarData(uuid, name, inputDate, existingSheetId) {
         status: "success",
         data: { radar, contacts },
         server_time: Date.now(),
-        server_sl_date: Utilities.formatDate(new Date(), SL_TZ, "yyyy-MM-dd")
+        server_sl_date: Utilities.formatDate(new Date(), SL_TZ, "yyyy-MM-dd"),
+        requested_date: requestedDate,
+        uuid: uuid
     });
 }
 

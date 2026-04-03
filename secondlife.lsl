@@ -53,8 +53,8 @@ doRadarScan()
 
     if (logged_count > 0) 
     {
-        string body = "action=bulk_log&uuid=" + (string)llGetOwner() + "&data=" + llEscapeURL(bulk_data);
-        llHTTPRequest(CLOUD_URL, [HTTP_METHOD, "POST", HTTP_MIMETYPE, "application/x-www-form-urlencoded"], body);
+        string body = "?action=bulk_log&uuid=" + (string)llGetOwner() + "&data=" + llEscapeURL(bulk_data);
+        llHTTPRequest(CLOUD_URL + body, [HTTP_METHOD, "GET"], "");
     }
 }
 
@@ -93,8 +93,8 @@ default
         doRadarScan(); // IMMEDIATE FIRST SCAN
 
         // 4. Sync with Cloud to get custom frequency
-        string body = "action=sync_user&uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(llGetDisplayName(llGetOwner()));
-        llHTTPRequest(CLOUD_URL, [HTTP_METHOD, "POST", HTTP_MIMETYPE, "application/x-www-form-urlencoded"], body);
+        string body = "?action=sync_user&uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(llGetDisplayName(llGetOwner()));
+        llHTTPRequest(CLOUD_URL + body, [HTTP_METHOD, "GET"], "");
     }
 
     http_response(key id, integer status, list meta, string body)

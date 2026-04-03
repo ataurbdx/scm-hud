@@ -239,7 +239,7 @@
                 const result = await response.json();
                 
                 if (result.status === "success") {
-                    renderData(result.data, result.server_time);
+                    renderData(result);
                     updateSyncTime();
                 } else if (result.status === "unregistered") {
                     showView('welcomeView');
@@ -292,19 +292,30 @@
             showView(tabName + 'Tab');
         }
 
-        function renderData(data, serverTimeMs) {
+        function renderData(result) {
             const currentView = document.querySelector('.view.active');
             if (currentView.id === 'loadingView' || currentView.id === 'welcomeView') showTab('radar');
             
-            renderRadarList(data.radar || []);
-            renderContacts(data.contacts || []);
+            renderRadarList(result.data.radar || [], result.requested_date || "Today");
+            renderContacts(result.data.contacts || []);
         }
 
-        function renderRadarList(items) {
+        function renderRadarList(items, dateShown) {
             const list = document.getElementById('radarList');
-            if (items.length === 0) { list.innerHTML = `<div class="status-msg">No scan history found for this user.</div>`; return; }
+            const summary = `<div style="font-size:11px; color:#71717a; margin-bottom:15px; border-bottom:1px solid #27272a; padding-bottom:10px;">Showing history for: <b style="color:#38bdf8">${dateShown}</b></div>`;
+
+            if (items.length === 0) { 
+                list.innerHTML = summary + `
+                    <div style="padding:40px 10px; text-align:center;">
+                        <div style="font-size:24px; margin-bottom:10px;">🔍</div>
+                        <div style="color:#71717a; font-size:14px;">No records found for this date.</div>
+                        <div style="font-size:11px; color:#52525b; margin-top:8px;">Ensure your HUD is attached and scanning.</div>
+                    </div>
+                `; 
+                return; 
+            }
             
-            list.innerHTML = items.map(p => {
+            list.innerHTML = summary + items.map(p => {
                 const formatTime = (ts) => ts ? new Date(ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "??:??";
                 const first = formatTime(p.first_seen);
                 const last = formatTime(p.last_seen);
