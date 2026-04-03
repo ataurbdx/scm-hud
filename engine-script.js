@@ -64,7 +64,7 @@ function handleRequest(e) {
         if (action === "bulk_log") {
             const ss = SpreadsheetApp.openById(sheetId);
             syncDatabase(ss);
-            logBulkRadar(ss, uuid, JSON.parse(dataMap.data));
+            bulkLogData(ss, uuid, dataMap.data);
             
             // Return settings to HUD so it can sync frequency
             const uTab = ss.getSheetByName("Users");
