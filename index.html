@@ -400,17 +400,17 @@
                 const lastTs = new Date(p.last_seen).getTime();
                 const serverTs = new Date(serverTime).getTime();
 
-                // If the person was seen in the last scan window (plus 5s safety), they are LIVE
-                const isLive = (serverTs - lastTs) < ((scanFreq + 5) * 1000);
-                const badge = isLive ? '<span class="badge live">LIVE</span>' : "";
-
+                // Bulletproof LIVE check: Within the scan window + 10s buffer
+                const isLive = (serverTs - lastTs) < ((scanFreq + 10) * 1000);
+                const nameColor = isLive ? "#22c55e" : "#fff"; 
+                
                 const rowDate = p.date ? new Date(p.date + "T00:00:00Z").toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : "";
                 const location = p.last_sim && p.last_sim !== "Unknown" ? ` in ${p.last_sim}` : "";
-
+                
                 return `
                 <div class="item">
                     <div class="item-info">
-                        <div class="item-name">${p.name} ${badge}</div>
+                        <div class="item-name" style="color:${nameColor}">${p.name}</div>
                         <div class="item-meta">${rowDate} | ${first} - ${last}${location}</div>
                     </div>
                     <div class="item-actions">
