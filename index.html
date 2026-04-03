@@ -5,12 +5,112 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SCM HUD</title>
-    <link rel="stylesheet" href="assets/style.css">
+    <!-- <link rel="stylesheet" href="assets/style.css"> -->
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transform: scaleY(1.4);
+        }
+
+        .container {
+            background: #27272a;
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+            margin-top: 84px;
+        }
+
+        h1 {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
 </head>
 
 <body>
 
-    <div class="container">
+    <!-- new hud design start  -->
+    <div class="main">
+        <div class="container">
+            <h1>I am header</h1>
+            <p>
+                Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, praesentium dolore! Id, omnis amet
+                corrupti eveniet consequatur animi neque quos vitae odit expedita quam facilis, ducimus obcaecati sequi
+                aliquid placeat. Commodi, numquam pariatur blanditiis nobis dolor quasi alias enim quaerat fugiat
+                obcaecati, ex omnis, cumque minima. Sapiente consectetur laborum consequuntur voluptas ipsum dolores.
+                Totam delectus sequi eligendi eum praesentium, alias quos, fugit dolor laudantium, accusantium esse
+                quia? Autem enim mollitia quidem dignissimos. Iure sequi saepe mollitia reprehenderit quos veniam
+                molestias consequatur? Quo sit facilis officia ratione et. Accusantium doloribus a illum id soluta
+                blanditiis alias porro, voluptatibus suscipit reprehenderit fuga?
+            </p>
+
+            <br>
+
+            <p>
+                Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, praesentium dolore! Id, omnis amet
+                corrupti eveniet consequatur animi neque quos vitae odit expedita quam facilis, ducimus obcaecati sequi
+                aliquid placeat. Commodi, numquam pariatur blanditiis nobis dolor quasi alias enim quaerat fugiat
+                obcaecati, ex omnis, cumque minima. Sapiente consectetur laborum consequuntur voluptas ipsum dolores.
+                Totam delectus sequi eligendi eum praesentium, alias quos, fugit dolor laudantium, accusantium esse
+                quia? Autem enim mollitia quidem dignissimos. Iure sequi saepe mollitia reprehenderit quos veniam
+                molestias consequatur? Quo sit facilis officia ratione et. Accusantium doloribus a illum id soluta
+                blanditiis alias porro, voluptatibus suscipit reprehenderit fuga?
+            </p>
+
+            <br>
+
+            <p>
+                Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, praesentium dolore! Id, omnis amet
+                corrupti eveniet consequatur animi neque quos vitae odit expedita quam facilis, ducimus obcaecati sequi
+                aliquid placeat. Commodi, numquam pariatur blanditiis nobis dolor quasi alias enim quaerat fugiat
+                obcaecati, ex omnis, cumque minima. Sapiente consectetur laborum consequuntur voluptas ipsum dolores.
+                Totam delectus sequi eligendi eum praesentium, alias quos, fugit dolor laudantium, accusantium esse
+                quia? Autem enim mollitia quidem dignissimos. Iure sequi saepe mollitia reprehenderit quos veniam
+                molestias consequatur? Quo sit facilis officia ratione et. Accusantium doloribus a illum id soluta
+                blanditiis alias porro, voluptatibus suscipit reprehenderit fuga?
+            </p>
+
+            <br>
+
+            <p>
+                Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, praesentium dolore! Id, omnis amet
+                corrupti eveniet consequatur animi neque quos vitae odit expedita quam facilis, ducimus obcaecati sequi
+                aliquid placeat. Commodi, numquam pariatur blanditiis nobis dolor quasi alias enim quaerat fugiat
+                obcaecati, ex omnis, cumque minima. Sapiente consectetur laborum consequuntur voluptas ipsum dolores.
+                Totam delectus sequi eligendi eum praesentium, alias quos, fugit dolor laudantium, accusantium esse
+                quia? Autem enim mollitia quidem dignissimos. Iure sequi saepe mollitia reprehenderit quos veniam
+                molestias consequatur? Quo sit facilis officia ratione et. Accusantium doloribus a illum id soluta
+                blanditiis alias porro, voluptatibus suscipit reprehenderit fuga?
+            </p>
+
+            <br>
+
+            <p>
+                Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nostrum, praesentium dolore! Id, omnis amet
+                corrupti eveniet consequatur animi neque quos vitae odit expedita quam facilis, ducimus obcaecati sequi
+                aliquid placeat. Commodi, numquam pariatur blanditiis nobis dolor quasi alias enim quaerat fugiat
+                obcaecati, ex omnis, cumque minima. Sapiente consectetur laborum consequuntur voluptas ipsum dolores.
+                Totam delectus sequi eligendi eum praesentium, alias quos, fugit dolor laudantium, accusantium esse
+                quia? Autem enim mollitia quidem dignissimos. Iure sequi saepe mollitia reprehenderit quos veniam
+                molestias consequatur? Quo sit facilis officia ratione et. Accusantium doloribus a illum id soluta
+                blanditiis alias porro, voluptatibus suscipit reprehenderit fuga?
+            </p>
+            <h1>Iam footer</h1>
+        </div>
+    </div>
+    <!-- new hud design end  -->
+
+    <!-- backup original code start  -->
+    <div class="container" style="display: none;">
         <!-- NAVIGATION (Sticky) -->
         <nav id="mainNav" class="nav-tabs">
             <button class="tab-btn active" onclick="showTab('radar')">Radar</button>
@@ -100,6 +200,7 @@
             </div>
         </div>
     </div>
+    <!-- backup orignal code end  -->
 
     <script src="assets/script.js"></script>
 </body>
