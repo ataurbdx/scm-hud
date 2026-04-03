@@ -1,0 +1,253 @@
+/* BASE THEME & SL RENDERING HACKS */
+body {
+    background-color: #09090b;
+    color: #f8fafc;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    zoom: 2;
+    cursor: default;
+    /* NO MORE GLOBAL POINTERS */
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+    cursor: default;
+}
+
+/* NAVIGATION TABS (Sticky) */
+.nav-tabs {
+    position: sticky;
+    top: 0;
+    background: #09090b;
+    border-bottom: 2px solid #27272a;
+    margin-bottom: 20px;
+    overflow: hidden;
+    display: none;
+    z-index: 1000;
+}
+
+.tab-btn {
+    float: left;
+    background: transparent;
+    border: none;
+    color: #71717a;
+    padding: 15px 25px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+}
+
+.tab-btn.active {
+    color: #38bdf8;
+    border-bottom-color: #38bdf8;
+}
+
+/* VIEWS */
+.view {
+    display: none;
+}
+
+.view.active {
+    display: block;
+}
+
+/* LOADING SCREEN */
+#loadingView {
+    text-align: center;
+    padding-top: 100px;
+    font-size: 24px;
+    color: #71717a;
+}
+
+/* WELCOME / SETUP VIEW */
+.welcome-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.welcome-header h1 {
+    color: #38bdf8;
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.instruction-box {
+    background: #18181b;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 25px;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.step {
+    margin-bottom: 15px;
+    font-size: 19px;
+}
+
+.step-num {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    background: #38bdf8;
+    color: #000;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 32px;
+    margin-right: 12px;
+    font-weight: bold;
+}
+
+/* UI COMPONENTS */
+.card {
+    background: #18181b;
+    border: 1px solid #27272a;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+    background: #0f172a;
+    border: 2px solid #38bdf8;
+    color: #fff;
+    padding: 25px;
+    font-size: 22px;
+    border-radius: 12px;
+    outline: none;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+}
+
+.btn {
+    background: #38bdf8;
+    color: #000;
+    border: none;
+    padding: 15px 30px;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+}
+
+/* LIST ITEMS */
+.item {
+    border-bottom: 1px solid #27272a;
+    padding: 15px 0;
+    min-height: 60px;
+    overflow: hidden;
+    display: flex;
+    /* Using flex for icon alignment if possible, otherwise float */
+    align-items: center;
+    justify-content: space-between;
+}
+
+.item-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.item-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-meta {
+    color: #38bdf8;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.item-actions {
+    display: flex;
+    gap: 12px;
+    margin-left: 15px;
+}
+
+.action-icon {
+    background: #27272a;
+    color: #f8fafc;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.action-icon:hover {
+    background: #38bdf8;
+    color: #000;
+}
+
+.action-icon.add-btn {
+    background: rgba(56, 189, 248, 0.1);
+    color: #38bdf8;
+    border: 1px solid #38bdf8;
+}
+
+.filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    background: rgba(24, 24, 27, 0.5);
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #27272a;
+}
+
+.filter-input {
+    flex: 1;
+    background: #09090b;
+    border: 1px solid #3f3f46;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.filter-date {
+    width: 130px;
+    background: #09090b;
+    border: 1px solid #3f3f46;
+    color: #fff;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.reset-btn {
+    background: #27272a;
+    color: #71717a;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.reset-btn:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+.status-msg {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 18px;
+}
