@@ -290,8 +290,9 @@
             if (items.length === 0) { list.innerHTML = `<div class="status-msg">No history found.</div>`; return; }
             
             list.innerHTML = items.map(p => {
-                const first = new Date(p.first_seen).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const last = new Date(p.last_seen).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const formatTime = (ts) => ts ? new Date(ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "Unknown";
+                const first = formatTime(p.first_seen);
+                const last = formatTime(p.last_seen);
                 return `
                 <div class="item">
                     <div class="item-info">

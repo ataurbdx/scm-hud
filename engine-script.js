@@ -118,10 +118,13 @@ function getAvatarData(uuid, name) {
         const nowMs = Date.now();
         for (let i = dData.length - 1; i > 0 && radar.length < 50; i--) {
             if (dData[i][dMap["owner_uuid"] - 1] == uuid) {
-                // Combine Date + Time
+                // Combine Date + Time using ISO format (T...Z) for 100% GMT parsing
                 const dateStr = Utilities.formatDate(new Date(dData[i][dMap["date"] - 1]), "GMT", "yyyy-MM-dd");
-                const timeStr = dData[i][dMap["last_seen_time"] - 1];
-                const lastSeenMs = new Date(dateStr + " " + timeStr).getTime();
+                const lastTimeStr = dData[i][dMap["last_seen_time"] - 1];
+                const firstTimeStr = dData[i][dMap["first_seen_time"] - 1] || lastTimeStr;
+
+                const lastSeenMs = new Date(dateStr + "T" + lastTimeStr + "Z").getTime();
+                const firstSeenMs = new Date(dateStr + "T" + firstTimeStr + "Z").getTime();
 
                 // CLOUD-SIDE NEARBY FILTER (90 seconds)
                 const isNearby = (nowMs - lastSeenMs) < 90000;
@@ -129,6 +132,7 @@ function getAvatarData(uuid, name) {
                 radar.push({
                     name: dData[i][dMap["target_name"] - 1],
                     key: dData[i][dMap["target_uuid"] - 1],
+                    first_seen: firstSeenMs,
                     last_seen: lastSeenMs,
                     dist: dData[i][dMap["last_dist"] - 1] || 0,
                     is_nearby: isNearby // Google decides if they are nearby!
