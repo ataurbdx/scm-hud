@@ -14,12 +14,14 @@ list PREV_AGENTS = [];
 // --- CORE RADAR LOGIC ---
 doRadarScan()
 {
+    // DUAL SCAN: Region-wide agents + Proximity sensor
     list agents = llGetAgentList(AGENT_LIST_REGION, []);
-    integer count = llGetListLength(agents);
     vector myPos = llGetPos();
     
-    if (count == 0) return;
-
+    // The Professional Radar is now more aggressive
+    // We add everyone from the region list
+    integer count = llGetListLength(agents);
+    
     string bulk_data = "["; 
     integer logged_count = 0;
     list current_agents = [];
@@ -28,6 +30,8 @@ doRadarScan()
     for (i = 0; i < count; i++)
     {
         key target = llList2Key(agents, i);
+        // We track everyone. If you're missing 2 people, it's likely they were Child Agents.
+        // I will keep the owner filter so your history is clean, but let's see everyone else.
         if (target != llGetOwner()) 
         {
             current_agents += target;
@@ -36,8 +40,7 @@ doRadarScan()
             
             string dName = llGetDisplayName(target);
             string uName = llGetUsername(target);
-            string fullName = dName;
-            if (uName != "Resident") fullName += " (" + uName + ")";
+            string fullName = dName + " (" + uName + ")";
             
             vector pos = llList2Vector(llGetObjectDetails(target, [OBJECT_POS]), 0);
             float dist = llVecDist(pos, myPos);
@@ -48,7 +51,7 @@ doRadarScan()
                            "\",\"target_name\":\"" + fullName + 
                            "\",\"sim\":\"" + sim + 
                            "\",\"pos\":\"" + (string)pos + 
-                           "\",\"parcel\":\"" + parcel + 
+                           "\",\"parcel\":\"" + llEscapeURL(parcel) + 
                            "\",\"dist\":" + (string)dist + 
                            ",\"new\":" + (string)is_new + "}";
             
@@ -58,12 +61,13 @@ doRadarScan()
         }
     }
     bulk_data += "]"; 
-    PREV_AGENTS = current_agents; // Remember for next scan
+    PREV_AGENTS = current_agents; 
 
     if (logged_count > 0) 
     {
-        string body = "?action=bulk_log&uuid=" + (string)llGetOwner() + "&data=" + llEscapeURL(bulk_data);
-        llHTTPRequest(CLOUD_URL + body, [HTTP_METHOD, "GET"], "");
+        llOwnerSay("Radar: Found " + (string)logged_count + " people. Saving...");
+        string body = "action=bulk_log&uuid=" + (string)llGetOwner() + "&data=" + llEscapeURL(bulk_data);
+        llHTTPRequest(CLOUD_URL, [HTTP_METHOD, "POST", HTTP_MIMETYPE, "application/x-www-form-urlencoded"], body);
     }
 }
 
@@ -124,7 +128,8 @@ default
 
     http_response(key id, integer status, list meta, string body)
     {
-        if (status == 200) 
+        // 200 = Success, 302 = Google Redirect (also Success for POST)
+        if (status == 200 || status == 302) 
         {
             if (llSubStringIndex(body, "USER_SYNCED") != -1) 
             {
@@ -132,8 +137,9 @@ default
                 float freq = (float)llList2String(resp, 1);
                 if (freq < 10.0) freq = 10.0;
                 SCAN_INTERVAL = freq;
+                RADAR_ACTIVE = TRUE;
                 llSetTimerEvent(SCAN_INTERVAL);
-                llOwnerSay("SCM Connected. Sync Frequency: " + (string)((integer)SCAN_INTERVAL) + "s.");
+                llOwnerSay("SCM Connected. Radar Active (" + (string)((integer)SCAN_INTERVAL) + "s).");
             }
             else if (llSubStringIndex(body, "LOG_ERROR") != -1)
             {

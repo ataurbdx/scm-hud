@@ -37,21 +37,34 @@ function doGet(e) { return handleRequest(e); }
 
 function handleRequest(e) {
     try {
-        const action = e.parameter.action;
-        const uuid = e.parameter.uuid || e.parameter.owner;
-        const name = e.parameter.name || "Unknown";
-        if (!uuid) return jsonResponse({ status: "error", message: "Missing UUID mapping." });
+        // Support both URL parameters and POST body
+        const params = e.parameter || {};
+        const postData = (e.postData && e.postData.contents) ? e.postData.contents : "";
 
-        if (action === "register") return registerUser(uuid, name, e.parameter.sheetUrl);
+        // Manual parse for POST if needed
+        let dataMap = params;
+        if (postData && !dataMap.action) {
+            postData.split('&').forEach(part => {
+                const pair = part.split('=');
+                dataMap[pair[0]] = decodeURIComponent(pair[1]);
+            });
+        }
+
+        const action = dataMap.action;
+        const uuid = dataMap.uuid || dataMap.owner;
+        const name = dataMap.name || "Unknown";
+
+        if (!uuid) return jsonResponse({ status: "error", message: "Missing UUID." });
+        if (action === "register") return registerUser(uuid, name, dataMap.sheetUrl);
 
         const sheetId = getUserSheetId(uuid);
         if (!sheetId) return jsonResponse({ status: "unregistered" });
 
-        if (action === "get_data") return getAvatarData(uuid, name, e.parameter.date, sheetId);
+        if (action === "get_data") return getAvatarData(uuid, name, dataMap.date, sheetId);
         if (action === "bulk_log") {
             const ss = SpreadsheetApp.openById(sheetId);
             syncDatabase(ss);
-            bulkLogData(ss, uuid, e.parameter.data);
+            bulkLogData(ss, uuid, dataMap.data); // dataMap.data contains the bulk JSON
             return ContentService.createTextOutput("BULK_SUCCESS");
         }
         if (action === "sync_user") return syncUser(uuid, name);
@@ -251,24 +264,26 @@ function syncDatabase(ss) {
         if (!sheet) {
             sheet = ss.insertSheet(name);
             sheet.appendRow(expectedHeaders);
-            sheet.getRange(1, 1, 1, expectedHeaders.length).setFontWeight("bold").setBackground("#d9eaf7");
+            sheet.getRange(1, 1, 1, expectedHeaders.length).setFontWeight("bold").setBackground("#cfe2f3");
             sheet.setFrozenRows(1);
         } else {
-            // 1. SAFE ADD: Add columns that are missing from Schema
-            var hMap = getHeaderMap(sheet);
-            expectedHeaders.forEach(header => {
-                if (!hMap[header]) {
-                    sheet.getRange(1, sheet.getLastColumn() + 1).setValue(header).setFontWeight("bold").setBackground("#e6fffa");
-                }
-            });
+            // FORCE CORRECT COLUMN ORDER (Professional Sync)
+            var currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+            var needsRepair = false;
 
-            // 2. SAFE DELETE: Only delete if on the "Death List"
-            COLUMNS_TO_DELETE.forEach(header => {
-                if (hMap[header]) {
-                    sheet.deleteColumn(hMap[header]);
-                    hMap = getHeaderMap(sheet); // Refresh map after delete shifts columns
+            if (currentHeaders.length < expectedHeaders.length) needsRepair = true;
+            else {
+                for (var i = 0; i < expectedHeaders.length; i++) {
+                    if (currentHeaders[i] !== expectedHeaders[i]) { needsRepair = true; break; }
                 }
-            });
+            }
+
+            if (needsRepair) {
+                // If column order is wrong, we fix the headers to match the schema exactly
+                sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders])
+                    .setFontWeight("bold").setBackground("#cfe2f3");
+                sheet.setFrozenRows(1);
+            }
         }
     }
     var s1 = ss.getSheetByName("Sheet1");
@@ -280,72 +295,88 @@ function syncDatabase(ss) {
 // ---------------------------------------------------------
 
 function bulkLogData(ss, owner, dataJson) {
-    const historyTab = ss.getSheetByName("History");
-    const encTab = ss.getSheetByName("Encounters");
-    if (!historyTab || !encTab) return;
+    // 1. GET A LOCK (Prevent Duplicate Rows from simultaneous scans)
+    const lock = LockService.getScriptLock();
+    try {
+        lock.waitLock(15000); // Wait up to 15 seconds for previous scan to finish
 
-    const hMap = getHeaderMap(historyTab);
-    const hData = historyTab.getDataRange().getValues();
-    const eMap = getHeaderMap(encTab);
-    const eData = encTab.getDataRange().getValues();
+        const historyTab = ss.getSheetByName("History");
+        const encTab = ss.getSheetByName("Encounters");
+        if (!historyTab || !encTab) return;
 
-    // FORCE SL (PACIFIC) TIMEZONE
-    const today = Utilities.formatDate(new Date(), SL_TZ, "yyyy-MM-dd");
-    const now = new Date(); // Internal JS Date for appendRow
+        const hMap = getHeaderMap(historyTab);
+        const hData = historyTab.getDataRange().getDisplayValues(); // Use DisplayValues for string matching
+        const eMap = getHeaderMap(encTab);
+        const eData = encTab.getDataRange().getValues();
 
-    const data = JSON.parse(dataJson);
-    data.forEach(p => {
-        const summaryId = owner + "_" + p.target_uuid + "_" + today;
-        
-        // --- 1. UPDATE HISTORY (PARENT) ---
-        let hRow = -1;
-        for (let i = 0; i < hData.length; i++) {
-            if (hData[i][hMap["summary_id"] - 1] == summaryId) { hRow = i; break; }
-        }
+        const tz = ss.getSpreadsheetTimeZone();
+        const today = Utilities.formatDate(new Date(), SL_TZ, "yyyy-MM-dd");
+        const now = new Date();
 
-        if (hRow == -1) {
-            const newHRow = new Array(historyTab.getLastColumn()).fill("");
-            newHRow[hMap["date"] - 1] = today;
-            newHRow[hMap["target_name"] - 1] = p.target_name;
-            newHRow[hMap["summary_id"] - 1] = summaryId;
-            newHRow[hMap["owner_uuid"] - 1] = owner;
-            newHRow[hMap["target_uuid"] - 1] = p.target_uuid;
-            newHRow[hMap["total_scans"] - 1] = 1;
-            newHRow[hMap["is_protected"] - 1] = 0;
-            historyTab.appendRow(newHRow);
-            hData.push(newHRow); 
-        } else {
-            const countCell = historyTab.getRange(hRow + 1, hMap["total_scans"]);
-            const currentCount = parseInt(hData[hRow][hMap["total_scans"] - 1]) || 0;
-            countCell.setValue(currentCount + 1);
-            historyTab.getRange(hRow + 1, hMap["target_name"]).setValue(p.target_name);
-        }
+        const data = JSON.parse(dataJson);
+        data.forEach(p => {
+            const summaryId = owner + "_" + p.target_uuid + "_" + today;
 
-        // --- 2. UPDATE ENCOUNTERS (CHILD) ---
-        let lastEncRow = -1;
-        for (let j = eData.length - 1; j > 0; j--) {
-            if (eData[j][eMap["summary_id"] - 1] == summaryId) { lastEncRow = j; break; }
-        }
+            // --- 1. UPDATE HISTORY (PARENT) ---
+            let hRow = -1;
+            // Check in-memory hData first
+            for (let i = 0; i < hData.length; i++) {
+                if (hData[i][hMap["summary_id"] - 1] == summaryId) { hRow = i; break; }
+            }
 
-        const isNewSession = (p.new == 1 || lastEncRow == -1);
+            if (hRow == -1) {
+                const newHRow = new Array(historyTab.getLastColumn()).fill("");
+                newHRow[hMap["date"] - 1] = today;
+                newHRow[hMap["target_name"] - 1] = p.target_name;
+                newHRow[hMap["summary_id"] - 1] = summaryId;
+                newHRow[hMap["owner_uuid"] - 1] = owner;
+                newHRow[hMap["target_uuid"] - 1] = p.target_uuid;
+                newHRow[hMap["total_scans"] - 1] = 1;
+                newHRow[hMap["is_protected"] - 1] = 0;
+                historyTab.appendRow(newHRow);
 
-        if (isNewSession) {
-            const newERow = new Array(encTab.getLastColumn()).fill("");
-            newERow[eMap["summary_id"] - 1] = summaryId;
-            newERow[eMap["first_seen"] - 1] = now;
-            newERow[eMap["last_seen"] - 1] = now;
-            newERow[eMap["dist"] - 1] = p.dist;
-            newERow[eMap["sim_name"] - 1] = p.sim;
-            newERow[eMap["sim_pos"] - 1] = p.pos;
-            newERow[eMap["parcel_name"] - 1] = p.parcel;
-            encTab.appendRow(newERow);
-            eData.push(newERow);
-        } else {
-            encTab.getRange(lastEncRow + 1, eMap["last_seen"]).setValue(now);
-            encTab.getRange(lastEncRow + 1, eMap["dist"]).setValue(p.dist);
-            encTab.getRange(lastEncRow + 1, eMap["sim_pos"]).setValue(p.pos);
-        }
-    });
+                // Add to memory so we find it if it appears again in the same batch
+                hData.push(newHRow.map(String));
+            } else {
+                const countCell = historyTab.getRange(hRow + 1, hMap["total_scans"]);
+                const currentCount = parseInt(hData[hRow][hMap["total_scans"] - 1]) || 0;
+                countCell.setValue(currentCount + 1);
+                hData[hRow][hMap["total_scans"] - 1] = (currentCount + 1).toString(); // Update memory
+
+                // Repair name in case it changed
+                historyTab.getRange(hRow + 1, hMap["target_name"]).setValue(p.target_name);
+            }
+
+            // --- 2. UPDATE ENCOUNTERS (CHILD) ---
+            let lastEncRow = -1;
+            for (let j = eData.length - 1; j > 0; j--) {
+                if (eData[j][eMap["summary_id"] - 1] == summaryId) { lastEncRow = j; break; }
+            }
+
+            const isNewSession = (p.new == 1 || lastEncRow == -1);
+
+            if (isNewSession) {
+                const newERow = new Array(encTab.getLastColumn()).fill("");
+                newERow[eMap["summary_id"] - 1] = summaryId;
+                newERow[eMap["first_seen"] - 1] = now;
+                newERow[eMap["last_seen"] - 1] = now;
+                newERow[eMap["dist"] - 1] = p.dist;
+                newERow[eMap["sim_name"] - 1] = p.sim;
+                newERow[eMap["sim_pos"] - 1] = p.pos;
+                newERow[eMap["parcel_name"] - 1] = p.parcel;
+                encTab.appendRow(newERow);
+                eData.push(newERow);
+            } else {
+                encTab.getRange(lastEncRow + 1, eMap["last_seen"]).setValue(now);
+                encTab.getRange(lastEncRow + 1, eMap["dist"]).setValue(p.dist);
+                encTab.getRange(lastEncRow + 1, eMap["sim_pos"]).setValue(p.pos);
+            }
+        });
+    } catch (e) {
+        console.error("Lock Error: " + e.toString());
+    } finally {
+        lock.releaseLock(); // Always release the lock
+    }
 }
 
 function syncUser(uuid, name) {
@@ -355,7 +386,7 @@ function syncUser(uuid, name) {
 
         const ss = SpreadsheetApp.openById(sheetId);
         syncDatabase(ss); // Auto-heal on sync
-        
+
         const uTab = ss.getSheetByName("Users");
         const uMap = getHeaderMap(uTab);
         const data = uTab.getDataRange().getValues();
