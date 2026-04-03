@@ -239,9 +239,27 @@ function getAvatarData(uuid, name, inputDate, existingSheetId) {
         }
     }
 
+    // 3. FETCH SETTINGS
+    const uTab = ss.getSheetByName("Users");
+    const uMap = getHeaderMap(uTab);
+    const uData = uTab.getDataRange().getValues();
+    let settings = { radar_scan_freq: 10 };
+    for (let i = 1; i < uData.length; i++) {
+        if (uData[i][uMap["user_uuid"] - 1] == uuid) {
+            settings = {
+                theme: uData[i][uMap["theme"] - 1],
+                glass: uData[i][uMap["transparency"] - 1],
+                scale: uData[i][uMap["scale"] - 1],
+                radar_scan_freq: uData[i][uMap["radar_scan_freq"] - 1] || 10
+            };
+            break;
+        }
+    }
+
     return jsonResponse({
         status: "success",
         data: { radar, contacts },
+        settings: settings,
         server_time: Date.now(),
         server_sl_date: Utilities.formatDate(new Date(), tz, "yyyy-MM-dd"),
         requested_date: requestedDate,

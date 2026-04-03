@@ -1,5 +1,5 @@
 // =========================================================================
-// SCM HUD - PROFESSIONAL RADAR & MEDIA SCRIPT (Version 2.1)
+// SCM HUD - MASTER RADAR ENGINE (Version 3.0)
 // =========================================================================
 
 string BROWSER_URL = "https://ataurbdx.github.io/scm-hud/";
@@ -9,19 +9,23 @@ integer HUD_FACE   = 4;
 float   SCAN_INTERVAL = 10.0;
 integer RADAR_ACTIVE  = FALSE;
 
-list PREV_AGENTS = [];
+list PREV_AGENTS = []; // To track "New" status
 
 // --- CORE RADAR LOGIC ---
 doRadarScan()
 {
-    // DUAL SCAN: Region-wide agents + Proximity sensor
     list agents = llGetAgentList(AGENT_LIST_REGION, []);
     vector myPos = llGetPos();
-    
-    // The Professional Radar is now more aggressive
-    // We add everyone from the region list
     integer count = llGetListLength(agents);
     
+    // TRUTH SCAN: What does the server see?
+    integer simPop = llGetRegionAgentCount();
+    llOwnerSay("DIAGNOSTIC: SIM Population = " + (string)simPop + " | Radar can see = " + (string)count);
+    
+    if (simPop > count) {
+        llOwnerSay("NOTICE: " + (string)(simPop - count) + " person(s) are either hidden or across the border and invisible to scripts.");
+    }
+
     string bulk_data = "["; 
     integer logged_count = 0;
     list current_agents = [];
@@ -30,18 +34,21 @@ doRadarScan()
     for (i = 0; i < count; i++)
     {
         key target = llList2Key(agents, i);
-        // We track everyone. If you're missing 2 people, it's likely they were Child Agents.
-        // I will keep the owner filter so your history is clean, but let's see everyone else.
         if (target != llGetOwner()) 
         {
             current_agents += target;
             
             integer is_new = (llListFindList(PREV_AGENTS, [target]) == -1);
             
-            string dName = llGetDisplayName(target);
             string uName = llGetUsername(target);
+            string dName = llGetDisplayName(target);
             string fullName = dName + " (" + uName + ")";
             
+            // Optimization: Filter out "Resident" suffix if redundant
+            if (llSubStringIndex(fullName, " (Resident)") != -1) {
+                fullName = dName;
+            }
+
             vector pos = llList2Vector(llGetObjectDetails(target, [OBJECT_POS]), 0);
             float dist = llVecDist(pos, myPos);
             string sim = llGetRegionName();
@@ -71,86 +78,46 @@ doRadarScan()
     }
 }
 
-refreshUI()
-{
-    // Build URL with Account Username (e.g. milfshefali)
-    string uName = llGetUsername(llGetOwner());
-    string final_url = BROWSER_URL + "?uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(uName);
-    final_url += "&v=" + (string)llRound(llFrand(999999.0));
-    
-    llSetPrimMediaParams(HUD_FACE, [
-        PRIM_MEDIA_CURRENT_URL, final_url,
-        PRIM_MEDIA_HOME_URL, final_url,
-        PRIM_MEDIA_AUTO_PLAY, TRUE,
-        PRIM_MEDIA_AUTO_SCALE, TRUE,
-        PRIM_MEDIA_CONTROLS, 0,
-        PRIM_MEDIA_WIDTH_PIXELS, 1024,
-        PRIM_MEDIA_HEIGHT_PIXELS, 1024
-    ]);
-}
-
 default
 {
     state_entry()
     {
-        llSetTexture(TEXTURE_TRANSPARENT, ALL_SIDES);
-        llSetColor(<1,1,1>, HUD_FACE);
-        llOwnerSay("SCM Professional 3.0 started.");
-        
-        // --- POWER START ---
-        refreshUI();
+        RADAR_ACTIVE = TRUE;
         llSetTimerEvent(SCAN_INTERVAL);
-        doRadarScan(); // Immediate first scan
-        
-        // Sync with Cloud for frequency settings
-        string body = "?action=sync_user&uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(llGetUsername(llGetOwner()));
-        llHTTPRequest(CLOUD_URL + body, [HTTP_METHOD, "GET"], "");
-    }
-
-    attach(key id)
-    {
-        if (id) 
-        {
-            PREV_AGENTS = []; 
-            refreshUI();
-            doRadarScan();
-            
-            // Force Cloud Sync on every attach
-            string body = "?action=sync_user&uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(llGetUsername(llGetOwner()));
-            llHTTPRequest(CLOUD_URL + body, [HTTP_METHOD, "GET"], "");
-        }
+        llOwnerSay("SCM HUD 3.0 ONLINE. Auto-Scanning every " + (string)((integer)SCAN_INTERVAL) + "s.");
+        doRadarScan();
     }
 
     timer()
     {
-        if (RADAR_ACTIVE) doRadarScan();
+        doRadarScan();
     }
 
     http_response(key id, integer status, list meta, string body)
     {
-        // 200 = Success, 302 = Google Redirect (also Success for POST)
-        if (status == 200 || status == 302) 
-        {
-            if (llSubStringIndex(body, "USER_SYNCED") != -1) 
-            {
-                list resp = llParseString2List(body, ["|"], []);
-                float freq = (float)llList2String(resp, 1);
-                if (freq < 10.0) freq = 10.0;
-                SCAN_INTERVAL = freq;
-                RADAR_ACTIVE = TRUE;
-                llSetTimerEvent(SCAN_INTERVAL);
-                llOwnerSay("SCM Connected. Radar Active (" + (string)((integer)SCAN_INTERVAL) + "s).");
-            }
-            else if (llSubStringIndex(body, "LOG_ERROR") != -1)
-            {
-                llOwnerSay("Cloud Warning: " + body);
-            }
-        }
-        else
-        {
-            llOwnerSay("SCM Error: Cloud server unreachable (HTTP " + (string)status + ")");
+        // 302 is success (Google redirect)
+        if (status == 200 || status == 302) {
+             // Optional: llOwnerSay("Cloud: Sync Success.");
+        } else {
+            llOwnerSay("Cloud Error: " + (string)status);
         }
     }
 
-    changed(integer change) { if (change & CHANGED_OWNER) llResetScript(); }
+    touch_start(integer n)
+    {
+        if (llDetectedTouchFace(0) == HUD_FACE)
+        {
+            RADAR_ACTIVE = !RADAR_ACTIVE;
+            if (RADAR_ACTIVE) {
+                llOwnerSay("Radar: ON (" + (string)((integer)SCAN_INTERVAL) + "s interval)");
+                doRadarScan();
+                llSetTimerEvent(SCAN_INTERVAL);
+            } else {
+                llOwnerSay("Radar: OFF");
+                llSetTimerEvent(0);
+            }
+        }
+    }
+
+    on_rez(integer p) { llResetScript(); }
 }
