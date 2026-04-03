@@ -318,87 +318,91 @@ function syncDatabase(ss) {
 // ---------------------------------------------------------
 
 function bulkLogData(ss, owner, dataJson) {
-    // 1. GET A LOCK (Prevent Duplicate Rows from simultaneous scans)
     const lock = LockService.getScriptLock();
     try {
-        lock.waitLock(15000); // Wait up to 15 seconds for previous scan to finish
+        lock.waitLock(15000);
 
         const historyTab = ss.getSheetByName("History");
         const encTab = ss.getSheetByName("Encounters");
         if (!historyTab || !encTab) return;
 
         const hMap = getHeaderMap(historyTab);
-        const hData = historyTab.getDataRange().getDisplayValues(); // Use DisplayValues for string matching
+        const hData = historyTab.getDataRange().getDisplayValues();
         const eMap = getHeaderMap(encTab);
         const eData = encTab.getDataRange().getValues();
 
-        const tz = ss.getSpreadsheetTimeZone();
         const today = Utilities.formatDate(new Date(), SL_TZ, "yyyy-MM-dd");
         const now = new Date();
 
+        // Performance: Pre-build a map for O(1) history lookups
+        const historyMap = {};
+        for (let i = 1; i < hData.length; i++) {
+            historyMap[hData[i][hMap["summary_id"] - 1]] = i;
+        }
+
         const data = JSON.parse(dataJson);
         data.forEach(p => {
-            const summaryId = owner + "_" + p.target_uuid + "_" + today;
+            // Hybrid Mapping v6.1: support both old long keys and new compressed short keys
+            const targetUuid = p.id  || p.target_uuid || "";
+            const targetName = decodeURIComponent(p.n || p.target_name || "Unknown");
+            const simName    = decodeURIComponent(p.s || p.sim || "");
+            const simPos     = p.p   || p.pos  || "";
+            const dist       = p.d   !== undefined ? p.d : (p.dist || 0);
+            const isNewFlag  = p.w   !== undefined ? p.w : (p.new  || 0);
 
-            // --- 1. UPDATE HISTORY (PARENT) ---
-            let hRow = -1;
-            // Check in-memory hData first
-            for (let i = 0; i < hData.length; i++) {
-                if (hData[i][hMap["summary_id"] - 1] == summaryId) { hRow = i; break; }
-            }
+            const summaryId = owner + "_" + targetUuid + "_" + today;
 
-            if (hRow == -1) {
+            // --- 1. HISTORY (PARENT) - O(1) lookup via map ---
+            let hRow = historyMap[summaryId] !== undefined ? historyMap[summaryId] : -1;
+
+            if (hRow === -1) {
                 const newHRow = new Array(historyTab.getLastColumn()).fill("");
-                newHRow[hMap["date"] - 1] = today;
-                newHRow[hMap["target_name"] - 1] = p.target_name;
-                newHRow[hMap["summary_id"] - 1] = summaryId;
-                newHRow[hMap["owner_uuid"] - 1] = owner;
-                newHRow[hMap["target_uuid"] - 1] = p.target_uuid;
-                newHRow[hMap["total_scans"] - 1] = 1;
+                newHRow[hMap["date"] - 1]         = today;
+                newHRow[hMap["target_name"] - 1]  = targetName;
+                newHRow[hMap["summary_id"] - 1]   = summaryId;
+                newHRow[hMap["owner_uuid"] - 1]   = owner;
+                newHRow[hMap["target_uuid"] - 1]  = targetUuid;
+                newHRow[hMap["total_scans"] - 1]  = 1;
                 newHRow[hMap["is_protected"] - 1] = 0;
                 historyTab.appendRow(newHRow);
-
-                // Add to memory so we find it if it appears again in the same batch
                 hData.push(newHRow.map(String));
+                historyMap[summaryId] = hData.length - 1; // Update map
             } else {
                 const countCell = historyTab.getRange(hRow + 1, hMap["total_scans"]);
                 const currentCount = parseInt(hData[hRow][hMap["total_scans"] - 1]) || 0;
                 countCell.setValue(currentCount + 1);
-                hData[hRow][hMap["total_scans"] - 1] = (currentCount + 1).toString(); // Update memory
-
-                // Repair name in case it changed
-                historyTab.getRange(hRow + 1, hMap["target_name"]).setValue(p.target_name);
+                hData[hRow][hMap["total_scans"] - 1] = (currentCount + 1).toString();
+                historyTab.getRange(hRow + 1, hMap["target_name"]).setValue(targetName);
             }
 
-            // --- 2. UPDATE ENCOUNTERS (CHILD) ---
+            // --- 2. ENCOUNTERS (CHILD) ---
             let lastEncRow = -1;
             for (let j = eData.length - 1; j > 0; j--) {
                 if (eData[j][eMap["summary_id"] - 1] == summaryId) { lastEncRow = j; break; }
             }
 
-            const isNewSession = (p.new == 1 || lastEncRow == -1);
-
+            const isNewSession = (isNewFlag == 1 || lastEncRow == -1);
             if (isNewSession) {
                 const newERow = new Array(encTab.getLastColumn()).fill("");
-                newERow[eMap["summary_id"] - 1] = summaryId;
-                newERow[eMap["first_seen"] - 1] = now;
-                newERow[eMap["last_seen"] - 1] = now;
-                newERow[eMap["dist"] - 1] = p.dist;
-                newERow[eMap["sim_name"] - 1] = p.sim;
-                newERow[eMap["sim_pos"] - 1] = p.pos;
-                newERow[eMap["parcel_name"] - 1] = p.parcel;
+                newERow[eMap["summary_id"] - 1]   = summaryId;
+                newERow[eMap["first_seen"] - 1]   = now;
+                newERow[eMap["last_seen"] - 1]    = now;
+                newERow[eMap["dist"] - 1]         = dist;
+                newERow[eMap["sim_name"] - 1]     = simName;
+                newERow[eMap["sim_pos"] - 1]      = simPos;
+                newERow[eMap["parcel_name"] - 1]  = "";
                 encTab.appendRow(newERow);
                 eData.push(newERow);
             } else {
                 encTab.getRange(lastEncRow + 1, eMap["last_seen"]).setValue(now);
-                encTab.getRange(lastEncRow + 1, eMap["dist"]).setValue(p.dist);
-                encTab.getRange(lastEncRow + 1, eMap["sim_pos"]).setValue(p.pos);
+                encTab.getRange(lastEncRow + 1, eMap["dist"]).setValue(dist);
+                encTab.getRange(lastEncRow + 1, eMap["sim_pos"]).setValue(simPos);
             }
         });
     } catch (e) {
-        console.error("Lock Error: " + e.toString());
+        console.error("bulkLogData Error: " + e.toString());
     } finally {
-        lock.releaseLock(); // Always release the lock
+        lock.releaseLock();
     }
 }
 
@@ -508,3 +512,4 @@ function toggleContact(ss, ownerUuid, targetUuid, targetName) {
 function jsonResponse(obj) {
     return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
+
