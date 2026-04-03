@@ -7,6 +7,7 @@
  */
 
 const MASTER_REGISTRY_NAME = "Master_Registry";
+const SL_TZ = "America/Los_Angeles"; // Second Life Standard Time (PST/PDT)
 
 // 1. MASTER SCHEMA (Blueprint) - Add new columns here to auto-deploy to users.
 const CRM_SCHEMA = {
@@ -110,7 +111,7 @@ function getAvatarData(uuid, name, inputDate) {
         }
     }
 
-    const requestedDate = inputDate || Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd");
+    const requestedDate = inputDate || Utilities.formatDate(new Date(), SL_TZ, "yyyy-MM-dd");
     const dailyTab = ss.getSheetByName("Seen_Daily");
     const dMap = getHeaderMap(dailyTab);
     const dData = dailyTab.getDataRange().getValues();
@@ -118,7 +119,12 @@ function getAvatarData(uuid, name, inputDate) {
     const radar = [];
     const nowMs = Date.now();
     for (let i = dData.length - 1; i > 0 && radar.length < 100; i--) {
-        const rowDate = Utilities.formatDate(new Date(dData[i][dMap["date"] - 1]), "GMT", "yyyy-MM-dd");
+        const rawCellValue = dData[i][dMap["date"] - 1];
+        if (!rawCellValue) continue;
+        
+        // Robust Date Conversion: Handle both Date objects and strings
+        const rowDate = Utilities.formatDate(new Date(rawCellValue), SL_TZ, "yyyy-MM-dd");
+        
         if (dData[i][dMap["owner_uuid"] - 1] == uuid && rowDate === requestedDate) {
             // Combine Date + Time using ISO format (T...Z) for 100% GMT parsing
             const lastTimeStr = padTime(dData[i][dMap["last_seen_time"] - 1]);
@@ -130,15 +136,15 @@ function getAvatarData(uuid, name, inputDate) {
             // CLOUD-SIDE NEARBY FILTER (120 seconds) - Unified list indicator
             const isNearby = (nowMs - lastSeenMs) < 120000;
 
-                radar.push({
-                    name: dData[i][dMap["target_name"] - 1],
-                    key: dData[i][dMap["target_uuid"] - 1],
-                    first_seen: firstSeenMs,
-                    last_seen: lastSeenMs,
-                    dist: dData[i][dMap["last_dist"] - 1] || 0,
-                    last_sim: dData[i][dMap["last_sim"] - 1] || "Unknown",
-                    is_nearby: isNearby
-                });
+            radar.push({
+                name: dData[i][dMap["target_name"] - 1],
+                key: dData[i][dMap["target_uuid"] - 1],
+                first_seen: firstSeenMs,
+                last_seen: lastSeenMs,
+                dist: dData[i][dMap["last_dist"] - 1] || 0,
+                last_sim: dData[i][dMap["last_sim"] - 1] || "Unknown",
+                is_nearby: isNearby
+            });
         }
     }
 
@@ -155,7 +161,8 @@ function getAvatarData(uuid, name, inputDate) {
     return jsonResponse({ 
         status: "success", 
         data: { radar, contacts }, 
-        server_time: Date.now() // USE NUMBER (MS) FOR 100% ACCURACY
+        server_time: Date.now(),
+        server_sl_date: Utilities.formatDate(new Date(), SL_TZ, "yyyy-MM-dd")
     });
 }
 
@@ -213,7 +220,7 @@ function bulkLogData(uuid, records) {
         const eMap = getHeaderMap(encTab);
         const encData = encTab.getDataRange().getValues();
 
-        const today = Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd");
+        const today = Utilities.formatDate(new Date(), SL_TZ, "yyyy-MM-dd");
 
         records.forEach(p => {
             const owner = p.owner || uuid;
@@ -225,7 +232,7 @@ function bulkLogData(uuid, records) {
 
             if (dRow == -1) {
                 const now = new Date();
-                const timeOnly = Utilities.formatDate(now, "GMT", "HH:mm:ss");
+                const timeOnly = Utilities.formatDate(new Date(), SL_TZ, "HH:mm:ss");
 
                 const row = new Array(dailyTab.getLastColumn()).fill("");
                 row[dMap["summary_id"] - 1] = summaryId;
@@ -242,7 +249,7 @@ function bulkLogData(uuid, records) {
                 dailyTab.appendRow(row);
                 dailyData.push(row);
             } else {
-                const timeOnly = Utilities.formatDate(new Date(), "GMT", "HH:mm:ss");
+                const timeOnly = Utilities.formatDate(new Date(), SL_TZ, "HH:mm:ss");
                 dailyTab.getRange(dRow + 1, dMap["total_scans"]).setValue(parseInt(dailyData[dRow][dMap["total_scans"] - 1]) + 1);
                 dailyTab.getRange(dRow + 1, dMap["last_seen_time"]).setValue(timeOnly);
                 dailyTab.getRange(dRow + 1, dMap["last_dist"]).setValue(p.dist || 0);

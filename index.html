@@ -222,18 +222,22 @@
 
         function initDateFilter() {
             const input = document.getElementById('dateFilter');
-            const today = new Date().toISOString().split('T')[0];
-            input.value = today;
-            document.getElementById('displayDate').innerText = formatFullDate(today);
+            // Estimate SL date (UTC-7/8) while waiting for server sync
+            const slEst = new Date(new Date().getTime() - (7 * 3600000)); 
+            const dateStr = slEst.toISOString().split('T')[0];
+            input.value = dateStr;
+            document.getElementById('displayDate').innerText = formatFullDate(dateStr);
         }
 
         function formatFullDate(dateStr) {
-            const d = new Date(dateStr + "T00:00:00Z");
+            if (!dateStr) return "Select Date";
+            // Explicitly parse YYYY-MM-DD to avoid timezone shifts
+            const parts = dateStr.split('-');
+            const d = new Date(Date.UTC(parts[0], parts[1]-1, parts[2]));
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
-            // Returns "25 March 2026", adding comma manually
-            const formatted = d.toLocaleDateString('en-GB', options);
-            const parts = formatted.split(' ');
-            if (parts.length === 3) return `${parts[0]} ${parts[1]}, ${parts[2]}`;
+            const formatted = d.toLocaleDateString('en-GB', { ...options, timeZone: 'UTC' });
+            const fParts = formatted.split(' ');
+            if (fParts.length === 3) return `${fParts[0]} ${fParts[1]}, ${fParts[2]}`;
             return formatted;
         }
 
@@ -250,10 +254,16 @@
 
         async function checkStatus() {
             try {
-                const date = document.getElementById('dateFilter').value;
+                const dateInput = document.getElementById('dateFilter');
+                const date = dateInput.value;
                 const response = await fetch(`${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}&name=${encodeURIComponent(userName)}&date=${date}`);
                 const result = await response.json();
                 if (result.status === "success") {
+                    // Sync HUD to server's SL date if not already set or specifically requested
+                    if (result.server_sl_date && !date) {
+                        dateInput.value = result.server_sl_date;
+                        document.getElementById('displayDate').innerText = formatFullDate(result.server_sl_date);
+                    }
                     renderData(result.data, result.server_time);
                     updateSyncTime();
                 } else if (result.status === "error" && result.message.includes("Mapping")) {
