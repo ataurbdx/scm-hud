@@ -160,8 +160,7 @@
 
         <!-- NAVIGATION (Sticky) -->
         <nav id="mainNav" class="nav-tabs">
-            <button class="tab-btn active" onclick="showTab('nearby')">Nearby</button>
-            <button class="tab-btn" onclick="showTab('history')">History</button>
+            <button class="tab-btn active" onclick="showTab('radar')">Radar</button>
             <button class="tab-btn" onclick="showTab('contacts')">Contacts</button>
             <button class="tab-btn" onclick="showTab('settings')">Settings</button>
         </nav>
@@ -184,12 +183,12 @@
             <div id="setupStatus" class="status-msg"></div>
         </div>
 
-        <div id="nearbyTab" class="view dashboard-tab">
+        <div id="radarTab" class="view dashboard-tab">
+            <div style="padding: 10px 0; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                <div id="displayDate" style="font-size: 18px; font-weight: bold; color: #38bdf8;">Loading date...</div>
+                <input type="date" id="dateFilter" style="background:#18181b; color:#fff; border:1px solid #38bdf8; padding:5px; border-radius:4px; font-size:14px;" onchange="handleDateChange()">
+            </div>
             <div class="card"><div id="radarList"></div></div>
-        </div>
-
-        <div id="historyTab" class="view dashboard-tab">
-            <div class="card"><div id="historyList"></div></div>
         </div>
 
         <div id="contactsTab" class="view dashboard-tab">
@@ -212,21 +211,52 @@
         const userName = urlParams.get('name');
         let refreshInterval;
 
-        window.onload = () => { if (userUUID) initHUD(); else document.getElementById('loadingView').innerHTML = "Run from SL HUD."; };
+        window.onload = () => { 
+            if (userUUID) {
+                initDateFilter();
+                initHUD();
+            } else {
+                document.getElementById('loadingView').innerHTML = "Run from SL HUD.";
+            }
+        };
+
+        function initDateFilter() {
+            const input = document.getElementById('dateFilter');
+            const today = new Date().toISOString().split('T')[0];
+            input.value = today;
+            document.getElementById('displayDate').innerText = formatFullDate(today);
+        }
+
+        function formatFullDate(dateStr) {
+            const d = new Date(dateStr + "T00:00:00Z");
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            // Returns "25 March 2026", adding comma manually
+            const formatted = d.toLocaleDateString('en-GB', options);
+            const parts = formatted.split(' ');
+            if (parts.length === 3) return `${parts[0]} ${parts[1]}, ${parts[2]}`;
+            return formatted;
+        }
+
+        function handleDateChange() {
+            const dateStr = document.getElementById('dateFilter').value;
+            document.getElementById('displayDate').innerText = formatFullDate(dateStr);
+            checkStatus();
+        }
 
         async function initHUD() {
             await checkStatus();
-            if (!refreshInterval) refreshInterval = setInterval(checkStatus, 10000);
+            if (!refreshInterval) refreshInterval = setInterval(checkStatus, 15000); // 15s for HUD stability
         }
 
         async function checkStatus() {
             try {
-                const response = await fetch(`${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}&name=${encodeURIComponent(userName)}`);
+                const date = document.getElementById('dateFilter').value;
+                const response = await fetch(`${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}&name=${encodeURIComponent(userName)}&date=${date}`);
                 const result = await response.json();
                 if (result.status === "success") {
                     renderData(result.data, result.server_time);
                     updateSyncTime();
-                } else {
+                } else if (result.status === "error" && result.message.includes("Mapping")) {
                     showView('welcomeView');
                 }
             } catch (err) { console.error(err); }
@@ -234,7 +264,7 @@
 
         function updateSyncTime() {
             const el = document.getElementById('syncStatus');
-            if (el) el.innerText = "Synced: " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            if (el) el.innerText = "Cloud Sync: " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
         }
 
         function showView(viewId) {
@@ -250,54 +280,29 @@
 
         function renderData(data, serverTimeMs) {
             const currentView = document.querySelector('.view.active');
-            if (currentView.id === 'loadingView' || currentView.id === 'welcomeView') showTab('nearby');
+            if (currentView.id === 'loadingView' || currentView.id === 'welcomeView') showTab('radar');
             
-            const rawRadar = data.radar || [];
-            
-            // NEARBY: Now controlled by Google Cloud (100% Reliable)
-            const nearby = rawRadar.filter(p => p.is_nearby === true)
-                                   .sort((a, b) => (a.dist || 0) - (b.dist || 0));
-            
-            // HISTORY: Everyone seen today
-            const history = rawRadar.sort((a, b) => b.last_seen - a.last_seen);
-
-            renderNearbyList(nearby);
-            renderHistoryList(history);
+            const radar = data.radar || [];
+            renderRadarList(radar);
             renderContacts(data.contacts || []);
         }
 
-        function renderNearbyList(items) {
+        function renderRadarList(items) {
             const list = document.getElementById('radarList');
-            if (items.length === 0) { list.innerHTML = `<div class="status-msg">No neighbors found.</div>`; return; }
-            
-            list.innerHTML = items.map(p => `
-                <div class="item">
-                    <div class="item-info">
-                        <div class="item-name">${p.name}</div>
-                        <div class="item-meta">${Math.round(p.dist || 0)}m range</div>
-                    </div>
-                    <div class="item-actions">
-                        <button class="action-icon" title="View Profile" onclick="openLink('about','${p.key}')">👤</button>
-                        <button class="action-icon" title="Send IM" onclick="openLink('im','${p.key}')">💬</button>
-                        <button class="action-icon add-btn" title="Add Contact">➕</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderHistoryList(items) {
-            const list = document.getElementById('historyList');
-            if (items.length === 0) { list.innerHTML = `<div class="status-msg">No history found.</div>`; return; }
+            if (items.length === 0) { list.innerHTML = `<div class="status-msg">No entries for this date.</div>`; return; }
             
             list.innerHTML = items.map(p => {
-                const formatTime = (ts) => ts ? new Date(ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "Unknown";
+                const formatTime = (ts) => ts ? new Date(ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "??:??";
                 const first = formatTime(p.first_seen);
                 const last = formatTime(p.last_seen);
+                const statusBadge = p.is_nearby ? '<span style="background:#22c55e; color:#000; padding:2px 6px; border-radius:4px; font-size:10px; margin-left:8px; vertical-align:middle;">LIVE</span>' : '';
+                const location = p.last_sim && p.last_sim !== "Unknown" ? ` in ${p.last_sim}` : "";
+                
                 return `
                 <div class="item">
                     <div class="item-info">
-                        <div class="item-name">${p.name}</div>
-                        <div class="item-meta">Seen: ${first} - ${last}</div>
+                        <div class="item-name">${p.name} ${statusBadge}</div>
+                        <div class="item-meta">Seen: ${first} - ${last}${location} (${Math.round(p.dist || 0)}m)</div>
                     </div>
                     <div class="item-actions">
                         <button class="action-icon" title="View Profile" onclick="openLink('about','${p.key}')">👤</button>
@@ -338,6 +343,9 @@
             } catch (err) { document.getElementById('setupStatus').innerText = "Error: " + err.message; }
         }
     </script>
+</body>
+
+</html>
 </body>
 
 </html>

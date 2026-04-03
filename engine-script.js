@@ -14,7 +14,7 @@ const CRM_SCHEMA = {
     "Categories": ["owner_uuid", "cat_id", "cat_name", "cat_color", "cat_icon", "created_at"],
     "Tags": ["owner_uuid", "tag_id", "tag_name", "tag_color", "tag_icon", "created_at"],
     "Contacts": ["owner_uuid", "contact_uuid", "contact_name", "cat_ids", "tag_ids", "notes", "created_at"],
-    "Seen_Daily": ["summary_id", "owner_uuid", "target_uuid", "target_name", "date", "is_protected", "total_scans", "last_seen_time", "last_dist", "first_seen_time"],
+    "Seen_Daily": ["summary_id", "owner_uuid", "target_uuid", "target_name", "date", "is_protected", "total_scans", "last_seen_time", "last_dist", "first_seen_time", "last_sim"],
     "Encounters": ["summary_id", "timestamp", "sim_name", "sim_pos", "parcel_name"]
 };
 
@@ -33,7 +33,7 @@ function handleRequest(e) {
         if (action === "register") return registerUser(uuid, e.parameter.name, e.parameter.sheetUrl);
         if (action === "bulk_log") return bulkLogData(uuid, JSON.parse(e.parameter.data || e.postData.contents));
         if (action === "sync_user") return syncUser(uuid, e.parameter.name);
-        if (action === "get_data") return getAvatarData(uuid, e.parameter.name);
+        if (action === "get_data") return getAvatarData(uuid, e.parameter.name, e.parameter.date);
 
         throw new Error("Invalid Action");
     } catch (error) {
@@ -90,7 +90,7 @@ function registerUser(uuid, name, sheetUrl) {
     return jsonResponse({ status: "success", message: "Registered!" });
 }
 
-function getAvatarData(uuid, name) {
+function getAvatarData(uuid, name, inputDate) {
     const sheetId = getUserSheetId(uuid);
     const ss = SpreadsheetApp.openById(sheetId);
     syncDatabase(ss); // Runs on every HUD attach to keep user updated
@@ -110,24 +110,25 @@ function getAvatarData(uuid, name) {
         }
     }
 
+    const requestedDate = inputDate || Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd");
     const dailyTab = ss.getSheetByName("Seen_Daily");
     const dMap = getHeaderMap(dailyTab);
     const dData = dailyTab.getDataRange().getValues();
 
-        const radar = [];
-        const nowMs = Date.now();
-        for (let i = dData.length - 1; i > 0 && radar.length < 50; i--) {
-            if (dData[i][dMap["owner_uuid"] - 1] == uuid) {
-                // Combine Date + Time using ISO format (T...Z) for 100% GMT parsing
-                const dateStr = Utilities.formatDate(new Date(dData[i][dMap["date"] - 1]), "GMT", "yyyy-MM-dd");
-                const lastTimeStr = dData[i][dMap["last_seen_time"] - 1];
-                const firstTimeStr = dData[i][dMap["first_seen_time"] - 1] || lastTimeStr;
+    const radar = [];
+    const nowMs = Date.now();
+    for (let i = dData.length - 1; i > 0 && radar.length < 100; i--) {
+        const rowDate = Utilities.formatDate(new Date(dData[i][dMap["date"] - 1]), "GMT", "yyyy-MM-dd");
+        if (dData[i][dMap["owner_uuid"] - 1] == uuid && rowDate === requestedDate) {
+            // Combine Date + Time using ISO format (T...Z) for 100% GMT parsing
+            const lastTimeStr = padTime(dData[i][dMap["last_seen_time"] - 1]);
+            const firstTimeStr = padTime(dData[i][dMap["first_seen_time"] - 1] || lastTimeStr);
 
-                const lastSeenMs = new Date(dateStr + "T" + lastTimeStr + "Z").getTime();
-                const firstSeenMs = new Date(dateStr + "T" + firstTimeStr + "Z").getTime();
+            const lastSeenMs = new Date(rowDate + "T" + lastTimeStr + "Z").getTime();
+            const firstSeenMs = new Date(rowDate + "T" + firstTimeStr + "Z").getTime();
 
-                // CLOUD-SIDE NEARBY FILTER (90 seconds)
-                const isNearby = (nowMs - lastSeenMs) < 90000;
+            // CLOUD-SIDE NEARBY FILTER (120 seconds) - Unified list indicator
+            const isNearby = (nowMs - lastSeenMs) < 120000;
 
                 radar.push({
                     name: dData[i][dMap["target_name"] - 1],
@@ -135,10 +136,11 @@ function getAvatarData(uuid, name) {
                     first_seen: firstSeenMs,
                     last_seen: lastSeenMs,
                     dist: dData[i][dMap["last_dist"] - 1] || 0,
-                    is_nearby: isNearby // Google decides if they are nearby!
+                    last_sim: dData[i][dMap["last_sim"] - 1] || "Unknown",
+                    is_nearby: isNearby
                 });
-            }
         }
+    }
 
     const conTab = ss.getSheetByName("Contacts");
     const cMap = getHeaderMap(conTab);
@@ -236,6 +238,7 @@ function bulkLogData(uuid, records) {
                 row[dMap["last_seen_time"] - 1] = timeOnly;
                 row[dMap["last_dist"] - 1] = p.dist || 0;
                 row[dMap["first_seen_time"] - 1] = timeOnly;
+                row[dMap["last_sim"] - 1] = p.sim;
                 dailyTab.appendRow(row);
                 dailyData.push(row);
             } else {
@@ -243,6 +246,7 @@ function bulkLogData(uuid, records) {
                 dailyTab.getRange(dRow + 1, dMap["total_scans"]).setValue(parseInt(dailyData[dRow][dMap["total_scans"] - 1]) + 1);
                 dailyTab.getRange(dRow + 1, dMap["last_seen_time"]).setValue(timeOnly);
                 dailyTab.getRange(dRow + 1, dMap["last_dist"]).setValue(p.dist || 0);
+                dailyTab.getRange(dRow + 1, dMap["last_sim"]).setValue(p.sim);
             }
 
             // Encounter Spot Update
@@ -276,6 +280,14 @@ function getHeaderMap(sheet) {
     var map = {};
     for (var i = 0; i < headers.length; i++) { if (headers[i]) map[headers[i]] = i + 1; }
     return map;
+}
+
+function padTime(timeStr) {
+    if (!timeStr) return "00:00:00";
+    if (timeStr instanceof Date) return Utilities.formatDate(timeStr, "GMT", "HH:mm:ss");
+    var parts = timeStr.toString().split(':');
+    if (parts.length < 3) return timeStr;
+    return parts.map(function(p) { return p.toString().trim().padStart(2, '0'); }).join(':');
 }
 
 function syncUser(uuid, name) {
