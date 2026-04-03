@@ -399,6 +399,9 @@
                 const first = formatTime(p.first_seen);
                 const last = formatTime(p.last_seen);
 
+                const lastTs = new Date(p.last_seen).getTime();
+                const serverTs = new Date(serverTime).getTime();
+
                 // Bulletproof LIVE check: Within the scan window + 10s buffer
                 const isLive = (serverTs - lastTs) < ((scanFreq + 10) * 1000);
                 const nameColor = isLive ? "#22c55e" : "#fff"; 
