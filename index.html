@@ -316,7 +316,11 @@
             }
             
             list.innerHTML = summary + items.map(p => {
-                const formatTime = (ts) => ts ? new Date(ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "??:??";
+                const formatTime = (ts) => ts ? new Date(ts).toLocaleTimeString('en-US', {
+                    hour: '2-digit', 
+                    minute:'2-digit', 
+                    timeZone: 'America/Los_Angeles'
+                }) : "??:??";
                 const first = formatTime(p.first_seen);
                 const last = formatTime(p.last_seen);
                 

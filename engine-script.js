@@ -241,6 +241,9 @@ function getAvatarData(uuid, name, inputDate, existingSheetId) {
 // ---------------------------------------------------------
 
 function syncDatabase(ss) {
+    // FORCE SPREADSHEET TO SL TIME
+    ss.setSpreadsheetTimeZone(SL_TZ);
+
     for (var name in CRM_SCHEMA) {
         var sheet = ss.getSheetByName(name);
         var expectedHeaders = CRM_SCHEMA[name];
@@ -286,9 +289,9 @@ function bulkLogData(ss, owner, dataJson) {
     const eMap = getHeaderMap(encTab);
     const eData = encTab.getDataRange().getValues();
 
-    const tz = ss.getSpreadsheetTimeZone();
-    const today = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd");
-    const now = new Date();
+    // FORCE SL (PACIFIC) TIMEZONE
+    const today = Utilities.formatDate(new Date(), SL_TZ, "yyyy-MM-dd");
+    const now = new Date(); // Internal JS Date for appendRow
 
     const data = JSON.parse(dataJson);
     data.forEach(p => {

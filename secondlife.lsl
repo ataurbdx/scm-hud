@@ -146,7 +146,5 @@ default
         }
     }
 
-    timer() { doRadarScan(); }
-    attach(key id) { if (id) llResetScript(); }
     changed(integer change) { if (change & CHANGED_OWNER) llResetScript(); }
 }
