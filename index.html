@@ -297,9 +297,21 @@
         };
 
         async function initHUD() {
+            // Check for initial route before loading data
+            const hash = window.location.hash.replace('#', '');
+            if (hash && ['radar', 'contacts', 'settings'].includes(hash)) {
+                showTab(hash, false);
+            }
+
             await checkStatus();
             if (!refreshInterval) refreshInterval = setInterval(() => checkStatus(false), 15000);
         }
+
+        // Listen for back/forward buttons
+        window.onhashchange = () => {
+            const hash = window.location.hash.replace('#', '');
+            if (hash) showTab(hash, false);
+        };
 
         async function checkStatus(isManual = false) {
             try {
@@ -360,14 +372,24 @@
             }
         }
 
-        function showTab(tabName) {
+        function showTab(tabName, updateHash = true) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.innerText.toLowerCase() === tabName));
             showView(tabName + 'Tab');
+            if (updateHash) window.location.hash = tabName;
         }
 
         function renderData(result) {
             const currentView = document.querySelector('.view.active');
-            if (currentView.id === 'loadingView' || currentView.id === 'welcomeView') showTab('radar');
+            
+            // If we are on the first-time loading screens, decide which tab to show
+            if (currentView.id === 'loadingView' || currentView.id === 'welcomeView') {
+                const hash = window.location.hash.replace('#', '');
+                if (hash && ['radar', 'contacts', 'settings'].includes(hash)) {
+                    showTab(hash, false);
+                } else {
+                    showTab('radar', true); 
+                }
+            }
             
             // Pass contacts to radar list so we know who is already a friend
             const contacts = result.data.contacts || [];
