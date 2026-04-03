@@ -9,14 +9,24 @@
 const MASTER_REGISTRY_NAME = "Master_Registry";
 const SL_TZ = "America/Los_Angeles"; // Second Life Standard Time (PST/PDT)
 
-// 1. MASTER SCHEMA (Blueprint) - Add new columns here to auto-deploy to users.
+// 1. MASTER SCHEMA (Blueprint) - Optimized Header/Detail Architecture
 const CRM_SCHEMA = {
-    "Users": ["user_uuid", "user_name", "theme", "transparency", "scale", "shared_mode", "seen_history", "history_delete_days", "history_min_secs", "scan_freq", "last_login", "created_at"],
+    "Users": [
+        "user_uuid", "user_name", "theme", "transparency", "scale",
+        "shared_status", "history_status", "history_clean_freq",
+        "radar_scan_freq", "created_at", "updated_at"
+    ],
     "Categories": ["owner_uuid", "cat_id", "cat_name", "cat_color", "cat_icon", "created_at"],
     "Tags": ["owner_uuid", "tag_id", "tag_name", "tag_color", "tag_icon", "created_at"],
     "Contacts": ["owner_uuid", "contact_uuid", "contact_name", "cat_ids", "tag_ids", "notes", "created_at"],
-    "Seen_Daily": ["summary_id", "owner_uuid", "target_uuid", "target_name", "date", "is_protected", "total_scans", "last_seen_time", "last_dist", "first_seen_time", "last_sim"],
-    "Encounters": ["summary_id", "timestamp", "sim_name", "sim_pos", "parcel_name"]
+    "History": [
+        "date", "target_name", "summary_id", "owner_uuid",
+        "target_uuid", "total_scans", "is_protected"
+    ],
+    "Encounters": [
+        "summary_id", "first_seen", "last_seen", "dist",
+        "sim_name", "sim_pos", "parcel_name"
+    ]
 };
 
 // 2. SAFE DELETE LIST (Columns removed from here will be deleted from all user sheets)
@@ -29,19 +39,22 @@ function handleRequest(e) {
     try {
         const action = e.parameter.action;
         const uuid = e.parameter.uuid || e.parameter.owner;
+        const name = e.parameter.name || "Unknown";
         if (!uuid) return jsonResponse({ status: "error", message: "Missing UUID mapping." });
 
-        if (action === "register") return registerUser(uuid, e.parameter.name, e.parameter.sheetUrl);
+        if (action === "register") return registerUser(uuid, name, e.parameter.sheetUrl);
 
-        // --- SECURE DATA RETRIEVAL ---
-        if (action === "get_data") {
-            const sheetId = getUserSheetId(uuid);
-            if (!sheetId) return jsonResponse({ status: "unregistered" });
-            return getAvatarData(uuid, e.parameter.name, e.parameter.date, sheetId);
+        const sheetId = getUserSheetId(uuid);
+        if (!sheetId) return jsonResponse({ status: "unregistered" });
+
+        if (action === "get_data") return getAvatarData(uuid, name, e.parameter.date, sheetId);
+        if (action === "bulk_log") {
+            const ss = SpreadsheetApp.openById(sheetId);
+            syncDatabase(ss);
+            bulkLogData(ss, uuid, e.parameter.data);
+            return ContentService.createTextOutput("BULK_SUCCESS");
         }
-
-        if (action === "bulk_log") return bulkLogData(uuid, JSON.parse(e.parameter.data || e.postData.contents));
-        if (action === "sync_user") return syncUser(uuid, e.parameter.name);
+        if (action === "sync_user") return syncUser(uuid, name);
 
         throw new Error("Invalid Action: " + action);
     } catch (error) {
@@ -59,7 +72,7 @@ function registerUser(uuid, name, sheetUrl) {
     const ss = SpreadsheetApp.openById(sheetId);
     if (!ss) throw new Error("Access Denied. Share with service email!");
 
-    syncDatabase(ss); // Build/Update Schema
+    syncDatabase(ss);
 
     const uTab = ss.getSheetByName("Users");
     const uMap = getHeaderMap(uTab);
@@ -72,11 +85,15 @@ function registerUser(uuid, name, sheetUrl) {
         const row = new Array(uTab.getLastColumn()).fill("");
         row[uMap["user_uuid"] - 1] = uuid;
         row[uMap["user_name"] - 1] = name || "Unknown";
-        row[uMap["theme"] - 1] = "Blue";
-        row[uMap["shared_mode"] - 1] = 0;
-        row[uMap["seen_history"] - 1] = 1;
-        row[uMap["scan_freq"] - 1] = 10;
+        row[uMap["theme"] - 1] = "Blue"; // Default Theme
+        row[uMap["transparency"] - 1] = 0.8; // Default Glass
+        row[uMap["scale"] - 1] = 1.0;
+        row[uMap["shared_status"] - 1] = 0;
+        row[uMap["history_status"] - 1] = 1;
+        row[uMap["history_clean_freq"] - 1] = 30;
+        row[uMap["radar_scan_freq"] - 1] = 10;
         row[uMap["created_at"] - 1] = new Date();
+        row[uMap["updated_at"] - 1] = new Date();
         uTab.appendRow(row);
     }
 
@@ -104,9 +121,9 @@ function getAvatarData(uuid, name, inputDate, existingSheetId) {
     if (!sheetId) return jsonResponse({ status: "unregistered" });
 
     const ss = SpreadsheetApp.openById(sheetId);
-    syncDatabase(ss); // Self-healing: Creates missing tabs/columns
+    syncDatabase(ss);
 
-    // REPAIR USER NAME (Fixes the "Unknown" user bug automatically)
+    // 1. REPAIR USER NAME (Fixes the "Unknown" user bug automatically)
     if (name && name !== "Unknown") {
         const uTab = ss.getSheetByName("Users");
         if (uTab) {
@@ -117,56 +134,75 @@ function getAvatarData(uuid, name, inputDate, existingSheetId) {
                     if (uData[i][uMap["user_name"] - 1] == "Unknown") {
                         uTab.getRange(i + 1, uMap["user_name"]).setValue(name);
                     }
-                    break;
                 }
             }
         }
     }
 
-    const requestedDate = inputDate || Utilities.formatDate(new Date(), SL_TZ, "yyyy-MM-dd");
-    const dailyTab = ss.getSheetByName("Seen_Daily");
-    if (!dailyTab) return jsonResponse({ status: "error", message: "Database Error: 'Seen_Daily' tab missing." });
+    // 2. CORE JOIN LOGIC (History + Encounters)
+    const historyTab = ss.getSheetByName("History");
+    const encTab = ss.getSheetByName("Encounters");
+    if (!historyTab || !encTab) return jsonResponse({ status: "error", message: "Database Error: Required tabs missing." });
 
-    const dMap = getHeaderMap(dailyTab);
-    const dData = dailyTab.getDataRange().getValues();
+    const hMap = getHeaderMap(historyTab);
+    const hData = historyTab.getDataRange().getDisplayValues();
+    const eMap = getHeaderMap(encTab);
+    const eData = encTab.getDataRange().getValues();
+
+    const tz = ss.getSpreadsheetTimeZone();
+    const requestedDate = inputDate || Utilities.formatDate(new Date(), tz, "yyyy-MM-dd");
 
     const radar = [];
     const nowMs = Date.now();
-    for (let i = dData.length - 1; i > 0 && radar.length < 100; i--) {
-        const rawCellValue = dData[i][dMap["date"] - 1];
-        if (!rawCellValue) continue;
 
-        // Robust Date Conversion: Handle both Date objects and strings
-        // We use GMT for Date objects to avoid midnight timezone shifts (2026-04-03 00:00:00 LA -> 2026-04-02 17:00:00)
-        let rowDateStr = "";
-        if (rawCellValue instanceof Date) {
-            rowDateStr = Utilities.formatDate(rawCellValue, "GMT", "yyyy-MM-dd");
-        } else {
-            rowDateStr = rawCellValue.toString().substring(0, 10);
-        }
+    // Group encounters by summary_id for faster lookup
+    const encountersByHistory = {};
+    for (let j = 1; j < eData.length; j++) {
+        const sId = eData[j][eMap["summary_id"] - 1];
+        if (!encountersByHistory[sId]) encountersByHistory[sId] = [];
+        encountersByHistory[sId].push({
+            start: new Date(eData[j][eMap["first_seen"] - 1]).getTime(),
+            end: new Date(eData[j][eMap["last_seen"] - 1]).getTime(),
+            dist: eData[j][eMap["dist"] - 1],
+            sim: eData[j][eMap["sim_name"] - 1]
+        });
+    }
 
-        // --- DATE FILTER: Skip rows that do not match the requested date ---
+    for (let i = hData.length - 1; i > 0 && radar.length < 100; i--) {
+        const rowDateStr = hData[i][hMap["date"] - 1];
         if (rowDateStr !== requestedDate) continue;
 
-        if (dData[i][dMap["owner_uuid"] - 1] == uuid) {
-            const lastTimeStr = padTime(dData[i][dMap["last_seen_time"] - 1]);
-            const firstTimeStr = padTime(dData[i][dMap["first_seen_time"] - 1] || lastTimeStr);
+        if (hData[i][hMap["owner_uuid"] - 1] == uuid) {
+            const summaryId = hData[i][hMap["summary_id"] - 1];
+            const relatedEnc = encountersByHistory[summaryId] || [];
 
-            // Construct accurate UTC timestamps from SL strings by parsing in Pacific Time (SL_TZ)
-            const lastSeenMs = Utilities.parseDate(rowDateStr + " " + lastTimeStr, SL_TZ, "yyyy-MM-dd HH:mm:ss").getTime();
-            const firstSeenMs = Utilities.parseDate(rowDateStr + " " + firstTimeStr, SL_TZ, "yyyy-MM-dd HH:mm:ss").getTime();
+            if (relatedEnc.length === 0) continue;
 
-            // CLOUD-SIDE NEARBY FILTER (15 minutes leeway)
-            const isNearby = (nowMs - lastSeenMs) < 900000;
+            // Calculate aggregate stats from all sessions today
+            let firstSeenMs = Infinity;
+            let lastSeenMs = -Infinity;
+            let lastDist = 0;
+            let lastSim = "Unknown";
+
+            relatedEnc.forEach(e => {
+                if (e.start < firstSeenMs) firstSeenMs = e.start;
+                if (e.end > lastSeenMs) {
+                    lastSeenMs = e.end;
+                    lastDist = e.dist;
+                    lastSim = e.sim;
+                }
+            });
+
+            const isNearby = (nowMs - lastSeenMs) < 900000; // 15 mins
 
             radar.push({
-                name: dData[i][dMap["target_name"] - 1],
-                key: dData[i][dMap["target_uuid"] - 1],
+                name: hData[i][hMap["target_name"] - 1],
+                key: hData[i][hMap["target_uuid"] - 1],
                 first_seen: firstSeenMs,
                 last_seen: lastSeenMs,
-                date: rowDate,
-                dist: dData[i][dMap["last_dist"] - 1] || 0,
-                last_sim: dData[i][dMap["last_sim"] - 1] || "Unknown",
+                date: rowDateStr,
+                dist: lastDist,
+                last_sim: lastSim,
                 is_nearby: isNearby
             });
         }
@@ -177,9 +213,15 @@ function getAvatarData(uuid, name, inputDate, existingSheetId) {
     if (conTab) {
         const cMap = getHeaderMap(conTab);
         const cData = conTab.getDataRange().getValues();
-        for (let i = 1; i < cData.length; i++) {
-            if (cData[i][cMap["owner_uuid"] - 1] == uuid) {
-                contacts.push({ name: cData[i][cMap["contact_name"] - 1], key: cData[i][cMap["contact_uuid"] - 1], notes: cData[i][cMap["notes"] - 1] });
+        for (let k = 1; k < cData.length; k++) {
+            if (cData[k][cMap["owner_uuid"] - 1] == uuid) {
+                contacts.push({
+                    name: cData[k][cMap["contact_name"] - 1],
+                    key: cData[k][cMap["contact_uuid"] - 1],
+                    cat_ids: cData[k][cMap["cat_ids"] - 1],
+                    tag_ids: cData[k][cMap["tag_ids"] - 1],
+                    notes: cData[k][cMap["notes"] - 1]
+                });
             }
         }
     }
@@ -188,7 +230,7 @@ function getAvatarData(uuid, name, inputDate, existingSheetId) {
         status: "success",
         data: { radar, contacts },
         server_time: Date.now(),
-        server_sl_date: Utilities.formatDate(new Date(), SL_TZ, "yyyy-MM-dd"),
+        server_sl_date: Utilities.formatDate(new Date(), tz, "yyyy-MM-dd"),
         requested_date: requestedDate,
         uuid: uuid
     });
@@ -240,66 +282,78 @@ function bulkLogData(uuid, records) {
         if (!sheetId) return ContentService.createTextOutput("LOG_ERROR|NOT_REGISTERED");
 
         const ss = SpreadsheetApp.openById(sheetId);
-        const dailyTab = ss.getSheetByName("Seen_Daily");
-        const dMap = getHeaderMap(dailyTab);
-        const dailyData = dailyTab.getDataRange().getValues();
 
-        const encTab = ss.getSheetByName("Encounters");
-        const eMap = getHeaderMap(encTab);
-        const encData = encTab.getDataRange().getValues();
+        function bulkLogData(ss, owner, dataJson) {
+            const historyTab = ss.getSheetByName("History");
+            const encTab = ss.getSheetByName("Encounters");
+            if (!historyTab || !encTab) return;
 
-        const today = Utilities.formatDate(new Date(), SL_TZ, "yyyy-MM-dd");
+            const hMap = getHeaderMap(historyTab);
+            const hData = historyTab.getDataRange().getValues();
+            const eMap = getHeaderMap(encTab);
+            const eData = encTab.getDataRange().getValues();
 
-        records.forEach(p => {
-            const owner = p.owner || uuid;
-            const summaryId = owner + "_" + p.target_uuid + "_" + today;
+            const tz = ss.getSpreadsheetTimeZone();
+            const today = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd");
+            const now = new Date();
 
-            // Daily Summary Update
-            let dRow = -1;
-            for (let i = 0; i < dailyData.length; i++) { if (dailyData[i][0] == summaryId) { dRow = i; break; } }
+            const data = JSON.parse(dataJson);
+            data.forEach(p => {
+                const summaryId = owner + "_" + p.target_uuid + "_" + today;
 
-            if (dRow == -1) {
-                const now = new Date();
-                const timeOnly = Utilities.formatDate(new Date(), SL_TZ, "HH:mm:ss");
+                // --- 1. UPDATE HISTORY (PARENT) ---
+                let hRow = -1;
+                for (let i = 0; i < hData.length; i++) {
+                    if (hData[i][hMap["summary_id"] - 1] == summaryId) { hRow = i; break; }
+                }
 
-                const row = new Array(dailyTab.getLastColumn()).fill("");
-                row[dMap["summary_id"] - 1] = summaryId;
-                row[dMap["owner_uuid"] - 1] = owner;
-                row[dMap["target_uuid"] - 1] = p.target_uuid;
-                row[dMap["target_name"] - 1] = p.target_name;
-                row[dMap["date"] - 1] = today;
-                row[dMap["is_protected"] - 1] = 0;
-                row[dMap["total_scans"] - 1] = 1;
-                row[dMap["last_seen_time"] - 1] = timeOnly;
-                row[dMap["last_dist"] - 1] = p.dist || 0;
-                row[dMap["first_seen_time"] - 1] = timeOnly;
-                row[dMap["last_sim"] - 1] = p.sim;
-                dailyTab.appendRow(row);
-                dailyData.push(row);
-            } else {
-                const timeOnly = Utilities.formatDate(new Date(), SL_TZ, "HH:mm:ss");
-                dailyTab.getRange(dRow + 1, dMap["total_scans"]).setValue(parseInt(dailyData[dRow][dMap["total_scans"] - 1]) + 1);
-                dailyTab.getRange(dRow + 1, dMap["last_seen_time"]).setValue(timeOnly);
-                dailyTab.getRange(dRow + 1, dMap["last_dist"]).setValue(p.dist || 0);
-                dailyTab.getRange(dRow + 1, dMap["last_sim"]).setValue(p.sim);
-            }
+                if (hRow == -1) {
+                    const newHRow = [];
+                    newHRow[hMap["date"] - 1] = today;
+                    newHRow[hMap["target_name"] - 1] = p.target_name;
+                    newHRow[hMap["summary_id"] - 1] = summaryId;
+                    newHRow[hMap["owner_uuid"] - 1] = owner;
+                    newHRow[hMap["target_uuid"] - 1] = p.target_uuid;
+                    newHRow[hMap["total_scans"] - 1] = 1;
+                    newHRow[hMap["is_protected"] - 1] = 0;
+                    historyTab.appendRow(newHRow);
+                    // Refresh data to include new row for subsequent scans in same batch
+                    hData.push(newHRow);
+                } else {
+                    const countCell = historyTab.getRange(hRow + 1, hMap["total_scans"]);
+                    countCell.setValue((parseInt(countCell.getValue()) || 0) + 1);
+                    historyTab.getRange(hRow + 1, hMap["target_name"]).setValue(p.target_name);
+                }
 
-            // Encounter Spot Update
-            let eRow = -1;
-            for (let i = 0; i < encData.length; i++) { if (encData[i][0] == summaryId && encData[i][eMap["sim_name"] - 1] == p.sim) { eRow = i; break; } }
-            if (eRow == -1) {
-                const row = new Array(encTab.getLastColumn()).fill("");
-                row[eMap["summary_id"] - 1] = summaryId;
-                row[eMap["timestamp"] - 1] = new Date();
-                row[eMap["sim_name"] - 1] = p.sim;
-                row[eMap["sim_pos"] - 1] = p.pos;
-                row[eMap["parcel_name"] - 1] = p.parcel;
-                encTab.appendRow(row);
-            } else {
-                encTab.getRange(eRow + 1, eMap["timestamp"]).setValue(new Date());
-                encTab.getRange(eRow + 1, eMap["sim_pos"]).setValue(p.pos);
-            }
-        });
+                // --- 2. UPDATE ENCOUNTERS (CHILD) ---
+                // Find the MOST RECENT encounter for this person
+                let lastEncRow = -1;
+                for (let j = eData.length - 1; j > 0; j--) {
+                    if (eData[j][eMap["summary_id"] - 1] == summaryId) { lastEncRow = j; break; }
+                }
+
+                const isNewSession = (p.new == 1 || lastEncRow == -1);
+
+                if (isNewSession) {
+                    const newERow = [];
+                    newERow[eMap["summary_id"] - 1] = summaryId;
+                    newERow[eMap["first_seen"] - 1] = now;
+                    newERow[eMap["last_seen"] - 1] = now;
+                    newERow[eMap["dist"] - 1] = p.dist;
+                    newERow[eMap["sim_name"] - 1] = p.sim;
+                    newERow[eMap["sim_pos"] - 1] = p.pos;
+                    newERow[eMap["parcel_name"] - 1] = p.parcel;
+                    encTab.appendRow(newERow);
+                    eData.push(newERow);
+                } else {
+                    // Update existing session
+                    encTab.getRange(lastEncRow + 1, eMap["last_seen"]).setValue(now);
+                    encTab.getRange(lastEncRow + 1, eMap["dist"]).setValue(p.dist);
+                    encTab.getRange(lastEncRow + 1, eMap["sim_pos"]).setValue(p.pos);
+                }
+            });
+        }
+        bulkLogData(ss, uuid, dataJson);
         return ContentService.createTextOutput("BULK_SUCCESS");
     } catch (e) {
         return ContentService.createTextOutput("LOG_ERROR|" + e.toString());

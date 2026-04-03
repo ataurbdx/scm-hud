@@ -9,6 +9,8 @@ integer HUD_FACE   = 4;
 float   SCAN_INTERVAL = 10.0;
 integer RADAR_ACTIVE  = FALSE;
 
+list PREV_AGENTS = [];
+
 // --- CORE RADAR LOGIC ---
 doRadarScan()
 {
@@ -16,10 +18,11 @@ doRadarScan()
     integer count = llGetListLength(agents);
     vector myPos = llGetPos();
     
-    if (count <= 1) return;
+    if (count == 0) return;
 
     string bulk_data = "["; 
     integer logged_count = 0;
+    list current_agents = [];
 
     integer i;
     for (i = 0; i < count; i++)
@@ -27,9 +30,13 @@ doRadarScan()
         key target = llList2Key(agents, i);
         if (target != llGetOwner()) 
         {
+            current_agents += target;
+            
+            integer is_new = (llListFindList(PREV_AGENTS, [target]) == -1);
+            
             string dName = llGetDisplayName(target);
             string uName = llGetUsername(target);
-            string fullName = dName; // Professional clean name
+            string fullName = dName;
             if (uName != "Resident") fullName += " (" + uName + ")";
             
             vector pos = llList2Vector(llGetObjectDetails(target, [OBJECT_POS]), 0);
@@ -42,7 +49,8 @@ doRadarScan()
                            "\",\"sim\":\"" + sim + 
                            "\",\"pos\":\"" + (string)pos + 
                            "\",\"parcel\":\"" + parcel + 
-                           "\",\"dist\":" + (string)dist + "}";
+                           "\",\"dist\":" + (string)dist + 
+                           ",\"new\":" + (string)is_new + "}";
             
             if (logged_count > 0) bulk_data += ",";
             bulk_data += entry;
@@ -50,6 +58,7 @@ doRadarScan()
         }
     }
     bulk_data += "]"; 
+    PREV_AGENTS = current_agents; // Remember for next scan
 
     if (logged_count > 0) 
     {
