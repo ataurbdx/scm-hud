@@ -302,7 +302,7 @@
         <div id="radarTab" class="view dashboard-tab">
             <div class="filter-bar">
                 <input type="text" id="radarSearchInput" class="filter-input" placeholder="Search name..." oninput="debounceSearch()">
-                <input type="date" id="radarDateInput" class="filter-date" onchange="checkStatus(true)">
+                <input type="date" id="radarDateInput" class="filter-date" onchange="checkStatus(true)" onclick="this.showPicker()">
                 <button class="reset-btn" onclick="resetRadarFilters()">✖</button>
             </div>
             <div class="card">
