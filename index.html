@@ -13,12 +13,14 @@
             font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
             zoom: 2;
+            cursor: default; /* NO MORE GLOBAL POINTERS */
         }
 
         .container {
             max-width: 900px;
             margin: 0 auto;
             padding: 0 20px;
+            cursor: default;
         }
 
         /* NAVIGATION TABS (Sticky) */
@@ -293,6 +295,7 @@
         let hasMoreContacts = true;
         let isLoadingRadar = false;
         let isLoadingContacts = false;
+        let isSyncing = false; // GUARD FOR GLOBAL SYNC
         let refreshInterval;
         let appSettings = { radar_scan_freq: 10 };
 
@@ -323,18 +326,22 @@
         };
 
         async function checkStatus(isManual = false) {
-            // Smart Sync: Fetch first page and merge into UI without resetting
+            if (isSyncing) return; // DON'T SYNC IF ALREADY DOING IT
+            isSyncing = true;
+
             try {
                 if (isManual) { 
                     radarOffset = 0; hasMoreRadar = true; 
                     document.getElementById('radarList').innerHTML = ""; 
                     await fetchNextPage("radar", false);
                 } else {
-                    await fetchNextPage("radar", true); // TRUE = SYNC MODE
+                    await fetchNextPage("radar", true); 
                 }
             } catch (err) {
                 console.error(err);
                 showErrorInRadar("Connectivity Error: Could not reach Master Engine.");
+            } finally {
+                isSyncing = false;
             }
         }
 
