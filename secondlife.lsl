@@ -69,8 +69,9 @@ doRadarScan()
 
 refreshUI()
 {
-    // Build URL with UUID mapping, Username mapping, and Cache Buster
-    string final_url = BROWSER_URL + "?uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(llGetDisplayName(llGetOwner()));
+    // Build URL with Account Username (e.g. milfshefali)
+    string uName = llGetUsername(llGetOwner());
+    string final_url = BROWSER_URL + "?uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(uName);
     final_url += "&v=" + (string)llRound(llFrand(999999.0));
     
     llSetPrimMediaParams(HUD_FACE, [
@@ -78,7 +79,7 @@ refreshUI()
         PRIM_MEDIA_HOME_URL, final_url,
         PRIM_MEDIA_AUTO_PLAY, TRUE,
         PRIM_MEDIA_AUTO_SCALE, TRUE,
-        PRIM_MEDIA_CONTROLS, 0, // 0 = Hide browser controls for a professional look
+        PRIM_MEDIA_CONTROLS, 0,
         PRIM_MEDIA_WIDTH_PIXELS, 1024,
         PRIM_MEDIA_HEIGHT_PIXELS, 1024
     ]);
@@ -88,22 +89,37 @@ default
 {
     state_entry()
     {
-        // 1. Setup Visuals
         llSetTexture(TEXTURE_TRANSPARENT, ALL_SIDES);
         llSetColor(<1,1,1>, HUD_FACE);
+        llOwnerSay("SCM Professional 3.0 started.");
         
-        llOwnerSay("SCM Professional starting up...");
-
-        // 2. Load the Web Interface
+        // --- POWER START ---
         refreshUI();
-
-        // 3. Setup Initial Radar
         llSetTimerEvent(SCAN_INTERVAL);
-        doRadarScan(); // IMMEDIATE FIRST SCAN
-
-        // 4. Sync with Cloud to get custom frequency
-        string body = "?action=sync_user&uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(llGetDisplayName(llGetOwner()));
+        doRadarScan(); // Immediate first scan
+        
+        // Sync with Cloud for frequency settings
+        string body = "?action=sync_user&uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(llGetUsername(llGetOwner()));
         llHTTPRequest(CLOUD_URL + body, [HTTP_METHOD, "GET"], "");
+    }
+
+    attach(key id)
+    {
+        if (id) 
+        {
+            PREV_AGENTS = []; 
+            refreshUI();
+            doRadarScan();
+            
+            // Force Cloud Sync on every attach
+            string body = "?action=sync_user&uuid=" + (string)llGetOwner() + "&name=" + llEscapeURL(llGetUsername(llGetOwner()));
+            llHTTPRequest(CLOUD_URL + body, [HTTP_METHOD, "GET"], "");
+        }
+    }
+
+    timer()
+    {
+        if (RADAR_ACTIVE) doRadarScan();
     }
 
     http_response(key id, integer status, list meta, string body)
