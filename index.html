@@ -8,50 +8,30 @@
     <!-- <link rel="stylesheet" href="assets/style.css"> -->
 
     <style>
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            /* ❗ prevent body scroll */
-        }
-
-        /* FULL HUD AREA */
         .hud-root {
             width: 100vw;
             height: 100vh;
-
             display: flex;
             align-items: center;
             justify-content: center;
-
-            /* 🔥 YOUR STRETCH */
-            transform: scaleY(1.8);
-            transform-origin: center;
         }
 
-        /* FIXED VIEWPORT INSIDE HUD */
+        /* This defines the FINAL visible HUD size */
         .hud-container {
             width: 800px;
-            /* fixed width */
             height: 450px;
-            /* fixed height (like 16:9) */
-
-            background: #27272a;
             overflow: hidden;
-            /* ❗ hide overflow outside */
-            border-radius: 10px;
+            background: #fff;
+            position: relative;
         }
 
-        /* SCROLLABLE AREA */
-        .hud-scroll {
-            width: 100%;
-            height: 100%;
+        /* This is the trick */
+        .hud-scale {
+            width: calc(100% / 1.8);
+            height: calc(100% / 1.8);
 
-            overflow-y: auto;
-            /* ✅ scroll INSIDE only */
-            padding: 20px;
-            box-sizing: border-box;
+            transform: scale(1.8);
+            transform-origin: top left;
         }
     </style>
 </head>
@@ -61,142 +41,166 @@
     <!-- new hud design start  -->
     <div class="hud-root">
         <div class="hud-container">
-            <div class="hud-scroll">
-                <h1>I am header</h1>
+            <div class="hud-scale">
+                <div class="hud-scroll">
+                    <h1>I am header</h1>
 
-                <p>
-                    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
-                    perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
-                    beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
-                    obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
-                    atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
-                    aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore rem
-                    provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
-                    repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum hic
-                    incidunt nulla!
-                </p>
+                    <p>
+                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
+                        perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
+                        beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
+                        obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
+                        atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
+                        aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore
+                        rem
+                        provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
+                        repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum
+                        hic
+                        incidunt nulla!
+                    </p>
 
-                <p>
-                    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
-                    perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
-                    beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
-                    obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
-                    atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
-                    aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore rem
-                    provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
-                    repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum hic
-                    incidunt nulla!
-                </p>
+                    <p>
+                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
+                        perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
+                        beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
+                        obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
+                        atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
+                        aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore
+                        rem
+                        provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
+                        repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum
+                        hic
+                        incidunt nulla!
+                    </p>
 
-                <p>
-                    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
-                    perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
-                    beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
-                    obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
-                    atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
-                    aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore rem
-                    provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
-                    repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum hic
-                    incidunt nulla!
-                </p>
+                    <p>
+                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
+                        perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
+                        beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
+                        obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
+                        atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
+                        aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore
+                        rem
+                        provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
+                        repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum
+                        hic
+                        incidunt nulla!
+                    </p>
 
-                <p>
-                    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
-                    perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
-                    beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
-                    obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
-                    atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
-                    aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore rem
-                    provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
-                    repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum hic
-                    incidunt nulla!
-                </p>
+                    <p>
+                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
+                        perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
+                        beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
+                        obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
+                        atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
+                        aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore
+                        rem
+                        provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
+                        repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum
+                        hic
+                        incidunt nulla!
+                    </p>
 
-                <p>
-                    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
-                    perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
-                    beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
-                    obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
-                    atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
-                    aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore rem
-                    provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
-                    repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum hic
-                    incidunt nulla!
-                </p>
+                    <p>
+                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
+                        perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
+                        beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
+                        obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
+                        atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
+                        aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore
+                        rem
+                        provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
+                        repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum
+                        hic
+                        incidunt nulla!
+                    </p>
 
-                <p>
-                    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
-                    perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
-                    beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
-                    obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
-                    atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
-                    aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore rem
-                    provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
-                    repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum hic
-                    incidunt nulla!
-                </p>
+                    <p>
+                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
+                        perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
+                        beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
+                        obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
+                        atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
+                        aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore
+                        rem
+                        provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
+                        repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum
+                        hic
+                        incidunt nulla!
+                    </p>
 
-                <p>
-                    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
-                    perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
-                    beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
-                    obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
-                    atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
-                    aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore rem
-                    provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
-                    repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum hic
-                    incidunt nulla!
-                </p>
+                    <p>
+                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
+                        perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
+                        beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
+                        obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
+                        atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
+                        aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore
+                        rem
+                        provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
+                        repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum
+                        hic
+                        incidunt nulla!
+                    </p>
 
-                <p>
-                    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
-                    perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
-                    beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
-                    obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
-                    atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
-                    aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore rem
-                    provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
-                    repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum hic
-                    incidunt nulla!
-                </p>
+                    <p>
+                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
+                        perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
+                        beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
+                        obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
+                        atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
+                        aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore
+                        rem
+                        provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
+                        repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum
+                        hic
+                        incidunt nulla!
+                    </p>
 
-                <p>
-                    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
-                    perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
-                    beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
-                    obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
-                    atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
-                    aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore rem
-                    provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
-                    repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum hic
-                    incidunt nulla!
-                </p>
+                    <p>
+                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
+                        perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
+                        beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
+                        obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
+                        atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
+                        aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore
+                        rem
+                        provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
+                        repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum
+                        hic
+                        incidunt nulla!
+                    </p>
 
-                <p>
-                    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
-                    perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
-                    beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
-                    obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
-                    atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
-                    aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore rem
-                    provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
-                    repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum hic
-                    incidunt nulla!
-                </p>
+                    <p>
+                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
+                        perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
+                        beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
+                        obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
+                        atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
+                        aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore
+                        rem
+                        provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
+                        repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum
+                        hic
+                        incidunt nulla!
+                    </p>
 
-                <p>
-                    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
-                    perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
-                    beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
-                    obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
-                    atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
-                    aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore rem
-                    provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
-                    repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum hic
-                    incidunt nulla!
-                </p>
+                    <p>
+                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
+                        perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
+                        beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
+                        obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
+                        atque et nisi quam repellat sequi voluptates. Ratione pariatur assumenda, tempore magnam iusto,
+                        aliquid sint itaque officiis libero ipsum aut consequuntur voluptatibus? Impedit ipsam dolore
+                        rem
+                        provident praesentium, nam possimus adipisci, atque corrupti sint quas modi reprehenderit
+                        repellendus recusandae at laborum qui ex. Quaerat totam molestias expedita a vel iure quod eum
+                        hic
+                        incidunt nulla!
+                    </p>
 
-                <h1>I am footer</h1>
+                    <h1>I am footer</h1>
+                </div>
             </div>
         </div>
     </div>
