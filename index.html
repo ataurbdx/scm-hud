@@ -208,6 +208,48 @@
             border: 1px solid #38bdf8;
         }
 
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            background: rgba(24, 24, 27, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #27272a;
+        }
+
+        .filter-input {
+            flex: 1;
+            background: #09090b;
+            border: 1px solid #3f3f46;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .filter-date {
+            width: 130px;
+            background: #09090b;
+            border: 1px solid #3f3f46;
+            color: #fff;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .reset-btn {
+            background: #27272a;
+            color: #71717a;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .reset-btn:hover { background: #ef4444; color: #fff; }
+
         .status-msg {
             margin-top: 15px;
             text-align: center;
@@ -258,6 +300,11 @@
         </div>
 
         <div id="radarTab" class="view dashboard-tab">
+            <div class="filter-bar">
+                <input type="text" id="radarSearchInput" class="filter-input" placeholder="Search name..." oninput="debounceSearch()">
+                <input type="date" id="radarDateInput" class="filter-date" onchange="checkStatus(true)">
+                <button class="reset-btn" onclick="resetRadarFilters()">✖</button>
+            </div>
             <div class="card">
                 <div id="radarList"></div>
                 <div id="radarSentinel" style="height:20px;"></div>
@@ -308,7 +355,8 @@
         let hasMoreContacts = true;
         let isLoadingRadar = false;
         let isLoadingContacts = false;
-        let isSyncing = false; // GUARD FOR GLOBAL SYNC
+        let isSyncing = false;
+        let searchTimeout;
         let refreshInterval;
         let appSettings = { radar_scan_freq: 10 };
 
@@ -374,8 +422,17 @@
             const statusText = document.getElementById('syncText');
             if (isSync) statusText.innerText = "Syncing " + type.charAt(0).toUpperCase() + type.slice(1) + "...";
 
+            let url = `${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}&type=${type}&offset=${offset}&limit=10`;
+            
+            if (type === "radar") {
+                const search = document.getElementById('radarSearchInput').value;
+                const date = document.getElementById('radarDateInput').value;
+                if (search) url += `&search=${encodeURIComponent(search)}`;
+                if (date) url += `&date=${date}`;
+            }
+
             try {
-                const response = await fetch(`${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}&type=${type}&offset=${offset}&limit=10`);
+                const response = await fetch(url);
                 const result = await response.json();
 
                 if (result.status === "success") {
@@ -443,9 +500,19 @@
             if (updateHash) window.location.hash = tabName;
             
             // Lazy Load: Only fetch data if the list is empty
-            // Lazy Load: Only fetch data if the list is empty
             if (tabName === 'radar' && document.getElementById('radarList').children.length === 0) fetchNextPage('radar');
             if (tabName === 'contacts' && document.getElementById('contactsList').children.length === 0) fetchNextPage('contacts');
+        }
+
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => checkStatus(true), 500);
+        }
+
+        function resetRadarFilters() {
+            document.getElementById('radarSearchInput').value = "";
+            document.getElementById('radarDateInput').value = "";
+            checkStatus(true);
         }
 
         async function saveSettings() {

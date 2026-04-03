@@ -60,7 +60,7 @@ function handleRequest(e) {
         const sheetId = getUserSheetId(uuid);
         if (!sheetId) return jsonResponse({ status: "unregistered" });
 
-        if (action === "get_data") return getAvatarData(uuid, name, dataMap.date, sheetId, dataMap.type || "all", dataMap.limit || 10, dataMap.offset || 0);
+        if (action === "get_data") return getAvatarData(uuid, name, dataMap.date, sheetId, dataMap.type || "all", dataMap.limit || 10, dataMap.offset || 0, dataMap.search || "");
         if (action === "bulk_log") {
             const ss = SpreadsheetApp.openById(sheetId);
             syncDatabase(ss);
@@ -150,7 +150,7 @@ function registerUser(uuid, name, sheetUrl) {
     return jsonResponse({ status: "success", message: "Registered!" });
 }
 
-function getAvatarData(uuid, name, inputDate, sheetId, type = "all", limit = 10, offset = 0) {
+function getAvatarData(uuid, name, inputDate, sheetId, type = "all", limit = 10, offset = 0, search = "") {
     const ss = SpreadsheetApp.openById(sheetId);
     if (!ss) return jsonResponse({ status: "error", message: "Unauthorized." });
     
@@ -203,8 +203,15 @@ function getAvatarData(uuid, name, inputDate, sheetId, type = "all", limit = 10,
             let matchedCount = 0;
             // Iterate backwards (newest history first)
             for (let i = hData.length - 1; i > 0; i--) {
-                if (hData[i][hMap["date"] - 1] !== requestedDate) continue;
-                if (hData[i][hMap["owner_uuid"] - 1] != uuid) continue;
+                const rowDate = hData[i][hMap["date"] - 1];
+                const rowOwner = hData[i][hMap["owner_uuid"] - 1];
+                const rowName = hData[i][hMap["target_name"] - 1];
+
+                if (inputDate && rowDate !== inputDate) continue; // Selective Date Filter
+                if (rowOwner != uuid) continue;
+                
+                // Name Search Filter
+                if (search && rowName.toLowerCase().indexOf(search.toLowerCase()) === -1) continue;
 
                 matchedCount++;
                 if (matchedCount <= offset) continue; // Skip until we reach our offset
