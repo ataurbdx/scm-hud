@@ -72,7 +72,7 @@ doRadarScan()
 
     if (logged_count > 0) 
     {
-        llOwnerSay("Radar: Found " + (string)logged_count + " people. Saving...");
+        // Silence the 'Saving' message by default for clean chat
         string body = "action=bulk_log&uuid=" + (string)llGetOwner() + "&data=" + llEscapeURL(bulk_data);
         llHTTPRequest(CLOUD_URL, [HTTP_METHOD, "POST", HTTP_MIMETYPE, "application/x-www-form-urlencoded"], body);
     }
@@ -84,7 +84,7 @@ default
     {
         RADAR_ACTIVE = TRUE;
         llSetTimerEvent(SCAN_INTERVAL);
-        llOwnerSay("SCM HUD 3.0 ONLINE. Auto-Scanning every " + (string)((integer)SCAN_INTERVAL) + "s.");
+        llOwnerSay("SCM HUD 4.0 ONLINE. Dynamic Sync Enabled.");
         doRadarScan();
     }
 
@@ -95,11 +95,25 @@ default
 
     http_response(key id, integer status, list meta, string body)
     {
-        // 302 is success (Google redirect)
-        if (status == 200 || status == 302) {
-             // Optional: llOwnerSay("Cloud: Sync Success.");
-        } else {
-            llOwnerSay("Cloud Error: " + (string)status);
+        if (status == 200 || status == 302) 
+        {
+            // Parse for dynamic settings
+            string freqStr = llJsonGetValue(body, ["radar_scan_freq"]);
+            if (freqStr != JSON_INVALID && freqStr != JSON_NULL) 
+            {
+                float newFreq = (float)freqStr;
+                if (newFreq < 5.0) newFreq = 5.0; // Fail-safe
+                if (newFreq != SCAN_INTERVAL) 
+                {
+                    SCAN_INTERVAL = newFreq;
+                    llSetTimerEvent(SCAN_INTERVAL);
+                    llOwnerSay("SCM: Scan Interval synced to " + (string)((integer)SCAN_INTERVAL) + "s.");
+                }
+            }
+        } 
+        else if (status != 0) 
+        {
+             llOwnerSay("Cloud Sync Error: " + (string)status);
         }
     }
 

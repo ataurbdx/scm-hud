@@ -64,8 +64,20 @@ function handleRequest(e) {
         if (action === "bulk_log") {
             const ss = SpreadsheetApp.openById(sheetId);
             syncDatabase(ss);
-            bulkLogData(ss, uuid, dataMap.data); // dataMap.data contains the bulk JSON
-            return ContentService.createTextOutput("BULK_SUCCESS");
+            logBulkRadar(ss, uuid, JSON.parse(dataMap.data));
+            
+            // Return settings to HUD so it can sync frequency
+            const uTab = ss.getSheetByName("Users");
+            const uMap = getHeaderMap(uTab);
+            const uData = uTab.getDataRange().getValues();
+            let scanFreq = 10;
+            for (let i = 1; i < uData.length; i++) {
+                if (uData[i][uMap["user_uuid"] - 1] == uuid) {
+                    scanFreq = uData[i][uMap["radar_scan_freq"] - 1] || 10;
+                    break;
+                }
+            }
+            return jsonResponse({ status: "success", radar_scan_freq: scanFreq });
         }
         if (action === "sync_user") return syncUser(uuid, name);
         if (action === "toggle_contact") {
