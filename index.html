@@ -399,8 +399,12 @@
                 const first = formatTime(p.first_seen);
                 const last = formatTime(p.last_seen);
 
-                const lastTs = new Date(p.last_seen).getTime();
-                const serverTs = new Date(serverTime).getTime();
+                // Bulletproof LIVE check: Within the scan window + 10s buffer
+                const isLive = (serverTs - lastTs) < ((scanFreq + 10) * 1000);
+                const nameColor = isLive ? "#22c55e" : "#fff"; 
+                
+                const rowDate = p.date ? new Date(p.date + "T00:00:00Z").toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : "";
+                const location = p.last_sim && p.last_sim !== "Unknown" ? ` in ${p.last_sim}` : "";
 
                 // Contact Check
                 const isContact = contacts.some(c => c.key === p.key);
@@ -496,7 +500,5 @@
         }
     </script>
 </body>
-
-</html>
 
 </html>
