@@ -323,26 +323,31 @@
         };
 
         async function checkStatus(isManual = false) {
-            // Smart Update: Only fetch the first page to see "Live" updates
+            // Smart Sync: Fetch first page and merge into UI without resetting
             try {
-                if (isManual) { radarOffset = 0; hasMoreRadar = true; document.getElementById('radarList').innerHTML = ""; }
-                await fetchNextPage("radar", true); 
+                if (isManual) { 
+                    radarOffset = 0; hasMoreRadar = true; 
+                    document.getElementById('radarList').innerHTML = ""; 
+                    await fetchNextPage("radar", false);
+                } else {
+                    await fetchNextPage("radar", true); // TRUE = SYNC MODE
+                }
             } catch (err) {
                 console.error(err);
                 showErrorInRadar("Connectivity Error: Could not reach Master Engine.");
             }
         }
 
-        async function fetchNextPage(type, isRefresh = false) {
-            if (type === "radar" && (isLoadingRadar || (!hasMoreRadar && !isRefresh))) return;
-            if (type === "contacts" && (isLoadingContacts || (!hasMoreContacts && !isRefresh))) return;
+        async function fetchNextPage(type, isSync = false) {
+            if (type === "radar" && !isSync && (isLoadingRadar || (!hasMoreRadar))) return;
+            if (type === "contacts" && !isSync && (isLoadingContacts || (!hasMoreContacts))) return;
 
             if (type === "radar") isLoadingRadar = true;
             if (type === "contacts") isLoadingContacts = true;
 
-            const offset = isRefresh ? 0 : (type === "radar" ? radarOffset : contactsOffset);
+            const offset = isSync ? 0 : (type === "radar" ? radarOffset : contactsOffset);
             const statusText = document.getElementById('syncText');
-            if (isRefresh) statusText.innerText = "Syncing...";
+            if (isSync) statusText.innerText = "Syncing...";
 
             try {
                 const response = await fetch(`${MASTER_ENGINE_URL}?action=get_data&uuid=${userUUID}&type=${type}&offset=${offset}&limit=10`);
@@ -350,13 +355,20 @@
 
                 if (result.status === "success") {
                     if (type === "radar") {
-                        if (isRefresh) radarOffset = 0;
-                        renderRadarList(result.data.radar || [], result.requested_date, result.server_time, result.settings?.radar_scan_freq || 10, result.data.contacts || [], !isRefresh);
-                        radarOffset += (result.data.radar || []).length;
+                        const items = result.data.radar || [];
+                        const contacts = result.data.contacts || [];
+                        
+                        if (isSync) {
+                            renderRadarItemsSmart(items, result.server_time, result.settings?.radar_scan_freq || 10, contacts);
+                        } else {
+                            renderRadarList(items, result.requested_date, result.server_time, result.settings?.radar_scan_freq || 10, contacts, true);
+                            radarOffset += items.length;
+                        }
+                        
                         hasMoreRadar = result.has_more_radar;
                         appSettings = result.settings || appSettings;
                     } else {
-                        renderContacts(result.data.contacts || [], !isRefresh);
+                        renderContacts(result.data.contacts || [], !isSync);
                         contactsOffset += (result.data.contacts || []).length;
                         hasMoreContacts = result.has_more_contacts;
                     }
@@ -418,51 +430,71 @@
             const summary = `<div id="radarSummary" style="font-size:11px; color:#71717a; margin-bottom:15px; border-bottom:1px solid #27272a; padding-bottom:10px;">Showing history for: <b style="color:#38bdf8">${dateShown}</b></div>`;
 
             if (!append && items.length === 0) {
-                list.innerHTML = summary + `
-                    <div style="padding:40px 10px; text-align:center;">
-                        <div style="font-size:24px; margin-bottom:10px;">🔍</div>
-                        <div style="color:#71717a; font-size:14px;">No records found for this date.</div>
-                    </div>
-                `;
+                list.innerHTML = summary + `<div style="padding:40px; text-align:center; color:#71717a;">No records found.</div>`;
                 return;
+            } else if (!append) {
+                list.innerHTML = summary;
             }
 
-            const html = items.map(p => {
-                const formatTime = (ts) => ts ? new Date(ts).toLocaleTimeString('en-US', {
-                    hour: '2-digit', minute: '2-digit', timeZone: 'America/Los_Angeles'
-                }) : "??:??";
-                const first = formatTime(p.first_seen);
-                const last = formatTime(p.last_seen);
-                const lastTs = new Date(p.last_seen).getTime();
-                const serverTs = new Date(serverTime).getTime();
-
-                const isLive = (serverTs - lastTs) < ((scanFreq + 10) * 1000);
-                const nameColor = isLive ? "#22c55e" : "#fff"; 
-                const rowDate = p.date ? new Date(p.date + "T00:00:00Z").toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : "";
-                const location = p.last_sim && p.last_sim !== "Unknown" ? ` in ${p.last_sim}` : "";
-
-                const isContact = contacts.some(c => c.key === p.key);
-                const contactIcon = isContact ? "🗑️" : "➕";
-                const contactTitle = isContact ? "Remove Contact" : "Add Contact";
-
-                return `
-                <div class="item" data-uuid="${p.key}">
-                    <div class="item-info">
-                        <div class="item-name" style="color:${nameColor}">${p.name}</div>
-                        <div class="item-meta">${rowDate} | ${first} - ${last}${location}</div>
-                    </div>
-                    <div class="item-actions">
-                        <button class="action-icon" onclick="openLink('about','${p.key}')">👤</button>
-                        <button class="action-icon add-btn" title="${contactTitle}" onclick="handleToggleContact('${p.key}', '${p.name}', this)">${contactIcon}</button>
-                    </div>
-                </div>
-            `}).join('');
-
-            if (append) {
+            items.forEach(p => {
+                const html = getRadarItemHtml(p, serverTime, scanFreq, contacts);
                 list.insertAdjacentHTML('beforeend', html);
-            } else {
-                list.innerHTML = summary + html;
+            });
+        }
+
+        function renderRadarItemsSmart(items, serverTime, scanFreq, contacts) {
+            const list = document.getElementById('radarList');
+            const summary = document.getElementById('radarSummary');
+            
+            // Loop backwards to prepend in reverse order (so newest is top)
+            for (let i = items.length - 1; i >= 0; i--) {
+                const p = items[i];
+                const existing = document.querySelector(`.item[data-uuid="${p.key}"]`);
+                const html = getRadarItemHtml(p, serverTime, scanFreq, contacts);
+
+                if (existing) {
+                    // Update in place (Patching)
+                    existing.outerHTML = html;
+                } else {
+                    // Prepend New Entry
+                    if (summary) {
+                        summary.insertAdjacentHTML('afterend', html);
+                    } else {
+                        list.insertAdjacentHTML('afterbegin', html);
+                    }
+                }
             }
+        }
+
+        function getRadarItemHtml(p, serverTime, scanFreq, contacts) {
+            const formatTime = (ts) => ts ? new Date(ts).toLocaleTimeString('en-US', {
+                hour: '2-digit', minute: '2-digit', timeZone: 'America/Los_Angeles'
+            }) : "??:??";
+            const first = formatTime(p.first_seen);
+            const last = formatTime(p.last_seen);
+            const lastTs = new Date(p.last_seen).getTime();
+            const serverTs = new Date(serverTime).getTime();
+
+            const isLive = (serverTs - lastTs) < ((scanFreq + 10) * 1000);
+            const nameColor = isLive ? "#22c55e" : "#fff"; 
+            const rowDate = p.date ? new Date(p.date + "T00:00:00Z").toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : "";
+            const location = p.last_sim && p.last_sim !== "Unknown" ? ` in ${p.last_sim}` : "";
+
+            const isContact = contacts.some(c => c.key === p.key);
+            const contactIcon = isContact ? "🗑️" : "➕";
+            const contactTitle = isContact ? "Remove Contact" : "Add Contact";
+
+            return `
+            <div class="item" data-uuid="${p.key}">
+                <div class="item-info">
+                    <div class="item-name" style="color:${nameColor}">${p.name}</div>
+                    <div class="item-meta">${rowDate} | ${first} - ${last}${location}</div>
+                </div>
+                <div class="item-actions">
+                    <button class="action-icon" onclick="openLink('about','${p.key}')">👤</button>
+                    <button class="action-icon add-btn" title="${contactTitle}" onclick="handleToggleContact('${p.key}', '${p.name}', this)">${contactIcon}</button>
+                </div>
+            </div>`;
         }
 
         async function handleToggleContact(targetUuid, targetName, btn) {
