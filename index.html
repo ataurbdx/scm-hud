@@ -51,7 +51,7 @@
 
         .hud-content main {
             background: red;
-            overflow: auto;
+            overflow: hidden;
             /* scroll inside main if needed */
         }
     </style>
@@ -72,7 +72,7 @@
                     <main>
                         I am content <br><br>
                         Lorem ipsum dolor sit amet...<br><br>
-                        (Add more content to test scrolling)
+                        (Add more content to test contenting)
                     </main>
 
                     <footer>
@@ -86,16 +86,16 @@
 
     <script>
         function updateMainHeight() {
-            const scroll = document.querySelector('.hud-content');
-            if (!scroll) return;
+            const content = document.querySelector('.hud-content');
+            if (!content) return;
 
-            const header = scroll.querySelector('header');
-            const footer = scroll.querySelector('footer');
-            const main = scroll.querySelector('main');
+            const header = content.querySelector('header');
+            const footer = content.querySelector('footer');
+            const main = content.querySelector('main');
 
             if (!main) return;
 
-            const totalHeight = scroll.clientHeight;
+            const totalHeight = content.clientHeight;
 
             const headerHeight = header ? header.offsetHeight : 0;
             const footerHeight = footer ? footer.offsetHeight : 0;
