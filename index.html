@@ -8,7 +8,7 @@
     <!-- <link rel="stylesheet" href="assets/style.css"> -->
 
     <style>
-        /* saructure css start */
+        /* ===== STRUCTURE CSS (your original, kept) ===== */
 
         html,
         body {
@@ -35,34 +35,25 @@
             margin-top: 80.5px;
         }
 
-        .hud-scroll {
+        .hud-content {
             height: 179.5px;
             overflow: auto;
-
-            display: flex;
-            flex-direction: column;
+            position: relative;
         }
 
-        .hud-scroll header {
+        .hud-content header {
             background: green;
-            position: sticky;
-            top: 0;
-            z-index: 1;
         }
 
-        .hud-scroll footer {
+        .hud-content footer {
             background: green;
-            position: sticky;
-            bottom: 0;
-            z-index: 1;
         }
 
-        .hud-scroll main {
-            flex: 1 0 auto;
+        .hud-content main {
             background: red;
+            overflow: auto;
+            /* scroll inside main if needed */
         }
-
-        /* structure css end  */
     </style>
 </head>
 
@@ -72,22 +63,71 @@
     <div class="hud-root">
         <div class="hud-container">
             <div class="hud-scale">
-                <div class="hud-scroll">
+                <div class="hud-content">
+
                     <header>
                         I am header
                     </header>
 
                     <main>
-                        I am content
+                        I am content <br><br>
+                        Lorem ipsum dolor sit amet...<br><br>
+                        (Add more content to test scrolling)
                     </main>
 
                     <footer>
                         I am footer
                     </footer>
+
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        function updateMainHeight() {
+            const scroll = document.querySelector('.hud-content');
+            if (!scroll) return;
+
+            const header = scroll.querySelector('header');
+            const footer = scroll.querySelector('footer');
+            const main = scroll.querySelector('main');
+
+            if (!main) return;
+
+            const totalHeight = scroll.clientHeight;
+
+            const headerHeight = header ? header.offsetHeight : 0;
+            const footerHeight = footer ? footer.offsetHeight : 0;
+
+            const remaining = totalHeight - headerHeight - footerHeight;
+
+            main.style.height = Math.max(0, remaining) + 'px';
+        }
+
+        // run on load
+        window.addEventListener('load', updateMainHeight);
+
+        // run on resize (important for SL scaling/zoom)
+        window.addEventListener('resize', updateMainHeight);
+
+        // also run when DOM is ready (extra safety)
+        document.addEventListener('DOMContentLoaded', updateMainHeight);
+
+        /* ===== EXTRA PRO TIP (auto detect changes) ===== */
+        // If header/footer content changes dynamically
+        const observer = new ResizeObserver(() => {
+            updateMainHeight();
+        });
+
+        window.addEventListener('load', () => {
+            const header = document.querySelector('header');
+            const footer = document.querySelector('footer');
+
+            if (header) observer.observe(header);
+            if (footer) observer.observe(footer);
+        });
+    </script>
     <!-- new hud design end  -->
 
     <!-- backup original code start  -->
