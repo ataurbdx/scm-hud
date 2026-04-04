@@ -8,30 +8,34 @@
     <!-- <link rel="stylesheet" href="assets/style.css"> -->
 
     <style>
-        .hud-root {
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        html,
+        body {
+            margin: 0;
+            padding: 0;
         }
 
-        /* This defines the FINAL visible HUD size */
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            margin: 0;
+        }
+
         .hud-container {
-            width: 800px;
-            height: 450px;
-            overflow: hidden;
-            background: #fff;
-            position: relative;
+            transform: scaleY(1.8);
         }
 
-        /* This is the trick */
         .hud-scale {
-            width: calc(100% / 1.8);
-            height: calc(100% / 1.8);
+            zoom: 2;
+            margin-top: 50px;
+        }
 
-            transform: scale(1.8);
-            transform-origin: top left;
+        .hud-scroll {
+            height: 100px;
+            overflow: auto;
+            background: #22c55e;
         }
     </style>
 </head>
@@ -46,7 +50,8 @@
                     <h1>I am header</h1>
 
                     <p>
-                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi adipisci
+                        1. Lorem, ipsum dolor sit amet consectetur adipisicing elit. Debitis voluptates excepturi
+                        adipisci
                         perferendis repellendus, enim, soluta, asperiores voluptatibus placeat laboriosam aut explicabo
                         beatae iste voluptas eum quod autem ipsam molestiae laudantium quia. Repudiandae maiores eius
                         obcaecati reprehenderit necessitatibus doloremque perferendis earum, unde nemo tenetur quibusdam
