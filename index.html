@@ -39,24 +39,26 @@
             height: 179.5px;
             overflow: auto;
 
-            /* display: flex;
-            flex-direction: column; */
+            display: flex;
+            flex-direction: column;
         }
 
         .hud-scroll header {
             background: green;
             position: sticky;
             top: 0;
+            z-index: 1;
         }
 
         .hud-scroll footer {
             background: green;
             position: sticky;
             bottom: 0;
+            z-index: 1;
         }
 
         .hud-scroll main {
-            flex-grow: 1;
+            flex: 1 0 auto;
             background: red;
             min-height: 100%;
         }
