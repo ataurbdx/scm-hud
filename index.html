@@ -38,7 +38,9 @@
         .hud-content {
             height: 179.5px;
             overflow: auto;
-            position: relative;
+
+            display: flex;
+            flex-direction: column;
         }
 
         .hud-content header {
@@ -51,8 +53,7 @@
 
         .hud-content main {
             background: red;
-            overflow: hidden;
-            /* scroll inside main if needed */
+            flex-grow: 1;
         }
     </style>
 </head>
