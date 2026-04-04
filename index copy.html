@@ -8,40 +8,32 @@
     <!-- <link rel="stylesheet" href="assets/style.css"> -->
 
     <style>
-        :root {
-            --scale: 3;
-            --ratio-fix: 1.9;
-        }
-
         html,
         body {
             margin: 0;
             padding: 0;
         }
 
-        h1 {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
             margin: 0;
         }
 
-        /* SL ratio fix */
         .hud-container {
-            transform: scaleY(var(--ratio-fix));
-            transform-origin: top;
+            transform: scaleY(1.9);
         }
 
-        /* zoom system (clean version of your zoom:3) */
         .hud-scale {
-            transform: scale(var(--scale));
-            transform-origin: top left;
-
-            width: calc(100% / var(--scale));
-            height: calc(100% / var(--scale));
+            zoom: 3;
+            margin-top: 80.5px;
         }
 
-        /* fixed viewport */
         .hud-scroll {
-            height: 100vh;
-            /* or fixed px if needed */
+            height: 179.5px;
             overflow: auto;
             background: #22c55e;
         }
@@ -56,6 +48,7 @@
             <div class="hud-scale">
                 <div class="hud-scroll">
                     <h1>I am header</h1>
+
                     <h1>I am footer</h1>
                 </div>
             </div>
