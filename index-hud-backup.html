@@ -26,33 +26,18 @@
             margin: 0;
         }
 
-        /* Normal Web View */
         .hud-container {
-            transform: scaleY(1.0);
-        }
-
-        .hud-scale {
-            zoom: 1;
-            margin-top: 0;
-        }
-
-        /* Second Life Only View (Auto-detect) */
-        body.is-secondlife .hud-container {
             transform: scaleY(1.9);
         }
 
-        body.is-secondlife .hud-scale {
+        .hud-scale {
             zoom: 3;
             margin-top: 80.8px;
         }
 
-        body.is-secondlife .hud-content {
-            height: 179.7px; /* Strict height required by SL primitive */
-        }
-
         .hud-content {
-            height: 100vh; /* Fills entire screen in normal browser! */
-            overflow: hidden;
+            height: 179.7px;
+            overflow: auto;
 
             display: flex;
             flex-direction: column;
@@ -579,28 +564,14 @@
             main.style.height = Math.max(0, remaining) + 'px';
         }
 
-        // Second Life Smart Detection
-        function detectSecondLife() {
-            // Check UserAgent OR URL parameter ?env=sl
-            if (navigator.userAgent.indexOf("SecondLife") !== -1 || window.location.search.includes('env=sl')) {
-                document.body.classList.add('is-secondlife');
-            }
-        }
-
         // run on load
-        window.addEventListener('load', () => {
-            detectSecondLife();
-            updateMainHeight();
-        });
+        window.addEventListener('load', updateMainHeight);
 
         // run on resize (important for SL scaling/zoom)
         window.addEventListener('resize', updateMainHeight);
 
         // also run when DOM is ready (extra safety)
-        document.addEventListener('DOMContentLoaded', () => {
-            detectSecondLife();
-            updateMainHeight();
-        });
+        document.addEventListener('DOMContentLoaded', updateMainHeight);
 
         /* ===== EXTRA PRO TIP (auto detect changes) ===== */
         // If header/footer content changes dynamically
@@ -617,6 +588,7 @@
         });
     </script>
     <!-- new hud design end  -->
+    <!-- <script src="assets/script.js"></script> -->
 </body>
 
 </html>
