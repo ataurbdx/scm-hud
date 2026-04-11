@@ -51,7 +51,8 @@
         .spa-page {
             display: none;
             flex: 1;
-            min-height: 0; /* CRITICAL for nested flexbox bounds */
+            min-height: 0;
+            /* CRITICAL for nested flexbox bounds */
             width: 100%;
             flex-direction: column;
         }
@@ -77,8 +78,117 @@
         .spa-page main {
             background: red;
             flex: 1;
-            min-height: 0; /* CRITICAL for internal scrolling */
+            min-height: 0;
+            /* CRITICAL for internal scrolling */
             overflow-y: auto;
+        }
+    </style>
+
+    <!-- page css start  -->
+    <style>
+        /* === GLOBAL THEME TOKENS === */
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --text-primary: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #06b6d4;
+            --accent-glow: rgba(6, 182, 212, 0.6);
+            --font-main: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: var(--text-primary);
+        }
+
+        /* === PRELOADER PAGE DESIGN === */
+        #page-preloader main {
+            background: radial-gradient(circle at center, var(--bg-panel) 0%, var(--bg-dark) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* High-tech animated ring */
+        .loader-ring {
+            width: 40px;
+            height: 40px;
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .loader-ring::before,
+        .loader-ring::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        .loader-ring::before {
+            width: 100%;
+            height: 100%;
+            border: 2px solid transparent;
+            border-top-color: var(--accent-cyan);
+            border-right-color: var(--accent-cyan);
+            animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+            filter: drop-shadow(0 0 5px var(--accent-glow));
+        }
+
+        .loader-ring::after {
+            width: 24px;
+            height: 24px;
+            border: 2px solid transparent;
+            border-bottom-color: #38bdf8;
+            border-left-color: #38bdf8;
+            top: 8px;
+            left: 8px;
+            animation: spin-reverse 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes spin-reverse {
+            100% {
+                transform: rotate(-360deg);
+            }
+        }
+
+        /* Typography */
+        .preloader-title {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            animation: pulse-glow 1.5s ease-in-out infinite;
+        }
+
+        .preloader-subtitle {
+            font-size: 9px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                text-shadow: 0 0 2px transparent;
+                opacity: 1;
+            }
+
+            50% {
+                text-shadow: 0 0 8px var(--accent-glow);
+                opacity: 0.7;
+            }
         }
     </style>
 </head>
@@ -92,18 +202,19 @@
                 <div class="hud-content">
 
                     <!-- PAGE 1: PRELOADER (Notice: No Header or Footer!) -->
-                    <div id="page-preloader" class="spa-page">
-                        <main
-                            style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: #e0e0e0;">
-                            <h2 style="color: #333;">Connecting...</h2>
-                            <p style="font-size: 0.8em; color: #666;">Syncing with SCM Master Registry</p>
+                    <div id="page-preloader" class="spa-page active">
+                        <main>
+                            <div class="loader-ring"></div>
+                            <div class="preloader-title">Connecting</div>
+                            <div class="preloader-subtitle">Syncing SCM Data</div>
                         </main>
                     </div>
 
                     <!-- PAGE 2: DATABASE SETUP (Notice: Has a Header, No Footer!) -->
-                    <div id="page-setup" class="spa-page active">
+                    <div id="page-setup" class="spa-page">
                         <header style="text-align: center; color: white;">Setup Required</header>
-                        <main style="padding: 10px; text-align: center; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <main
+                            style="padding: 10px; text-align: center; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                             <h3 style="margin-bottom: 5px; color: darkred;">Database Not Found</h3>
                             <p style="font-size: 0.8em; margin-bottom: 10px;">Register your Google App URL.</p>
 
@@ -134,32 +245,8 @@
     </div>
 
     <script>
-        // Now that the CSS Flexbox has min-height: 0, it perfectly calculates sub-pixels itself!
-        // We do NOT want to explicitly set main.style.height using JS anymore!
-        // JS offsetHeight returns integers (e.g. 21px).
-        // CSS resolves decimals exactly (e.g. 21.2px) inside a total 179.7px container.
-        // Forcing a JS integer height makes the boxes mathematically overflow by 0.5px.
-        function updateMainHeight() {
-             // Let CSS Flexbox do 100% of the work. 
-        }
-
-        // Run on load and resize
-        window.addEventListener('load', updateMainHeight);
-        window.addEventListener('resize', updateMainHeight);
-        document.addEventListener('DOMContentLoaded', updateMainHeight);
-
-        // EXTRA PRO TIP: Observe ALL headers and footers for dynamic changes
-        const observer = new ResizeObserver(() => {
-            updateMainHeight();
-        });
-
-        window.addEventListener('load', () => {
-            const headers = document.querySelectorAll('header');
-            const footers = document.querySelectorAll('footer');
-
-            headers.forEach(h => observer.observe(h));
-            footers.forEach(f => observer.observe(f));
-        });
+        // Example logic for switching SPA pages
+        // You can attach these functions to your actual LSL Linkset messages later.
     </script>
     <!-- new hud design end  -->
 </body>
