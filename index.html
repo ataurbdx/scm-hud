@@ -100,8 +100,17 @@
             --accent-glow: rgba(6, 182, 212, 0.4);
             --accent-red: #ef4444;
             
-            --font-main: 'Segoe UI', Roboto, sans-serif;
+            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             --blur: 8px;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: var(--text-primary);
+            text-rendering: optimizeSpeed;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            letter-spacing: 0.2px;
         }
 
         /* === TRIPLE-SWITCH LOGIC (CSS ONLY) === */
