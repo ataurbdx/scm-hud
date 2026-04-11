@@ -65,7 +65,7 @@ function handleRequest(e) {
             const ss = SpreadsheetApp.openById(sheetId);
             syncDatabase(ss);
             bulkLogData(ss, uuid, dataMap.data);
-            
+
             // Return settings to HUD so it can sync frequency
             const uTab = ss.getSheetByName("Users");
             const uMap = getHeaderMap(uTab);
@@ -153,7 +153,7 @@ function registerUser(uuid, name, sheetUrl) {
 function getAvatarData(uuid, name, inputDate, sheetId, type = "all", limit = 10, offset = 0, search = "") {
     const ss = SpreadsheetApp.openById(sheetId);
     if (!ss) return jsonResponse({ status: "error", message: "Unauthorized." });
-    
+
     const tz = ss.getSpreadsheetTimeZone();
     const requestedDate = inputDate || Utilities.formatDate(new Date(), tz, "yyyy-MM-dd");
     const result = { status: "success", data: {}, server_time: Date.now() };
@@ -209,7 +209,7 @@ function getAvatarData(uuid, name, inputDate, sheetId, type = "all", limit = 10,
 
                 if (inputDate && rowDate !== inputDate) continue; // Selective Date Filter
                 if (rowOwner != uuid) continue;
-                
+
                 // Name Search Filter
                 if (search && rowName.toLowerCase().indexOf(search.toLowerCase()) === -1) continue;
 
@@ -255,7 +255,7 @@ function getAvatarData(uuid, name, inputDate, sheetId, type = "all", limit = 10,
                     matchedCount++;
                     if (matchedCount <= offset) continue;
                     if (contacts.length >= limit) break;
-                    
+
                     contacts.push({
                         name: cData[k][cMap["contact_name"] - 1],
                         key: cData[k][cMap["contact_uuid"] - 1],
@@ -343,12 +343,12 @@ function bulkLogData(ss, owner, dataJson) {
         const data = JSON.parse(dataJson);
         data.forEach(p => {
             // Hybrid Mapping v6.1: support both old long keys and new compressed short keys
-            const targetUuid = p.id  || p.target_uuid || "";
+            const targetUuid = p.id || p.target_uuid || "";
             const targetName = decodeURIComponent(p.n || p.target_name || "Unknown");
-            const simName    = decodeURIComponent(p.s || p.sim || "");
-            const simPos     = p.p   || p.pos  || "";
-            const dist       = p.d   !== undefined ? p.d : (p.dist || 0);
-            const isNewFlag  = p.w   !== undefined ? p.w : (p.new  || 0);
+            const simName = decodeURIComponent(p.s || p.sim || "");
+            const simPos = p.p || p.pos || "";
+            const dist = p.d !== undefined ? p.d : (p.dist || 0);
+            const isNewFlag = p.w !== undefined ? p.w : (p.new || 0);
 
             const summaryId = owner + "_" + targetUuid + "_" + today;
 
@@ -357,12 +357,12 @@ function bulkLogData(ss, owner, dataJson) {
 
             if (hRow === -1) {
                 const newHRow = new Array(historyTab.getLastColumn()).fill("");
-                newHRow[hMap["date"] - 1]         = today;
-                newHRow[hMap["target_name"] - 1]  = targetName;
-                newHRow[hMap["summary_id"] - 1]   = summaryId;
-                newHRow[hMap["owner_uuid"] - 1]   = owner;
-                newHRow[hMap["target_uuid"] - 1]  = targetUuid;
-                newHRow[hMap["total_scans"] - 1]  = 1;
+                newHRow[hMap["date"] - 1] = today;
+                newHRow[hMap["target_name"] - 1] = targetName;
+                newHRow[hMap["summary_id"] - 1] = summaryId;
+                newHRow[hMap["owner_uuid"] - 1] = owner;
+                newHRow[hMap["target_uuid"] - 1] = targetUuid;
+                newHRow[hMap["total_scans"] - 1] = 1;
                 newHRow[hMap["is_protected"] - 1] = 0;
                 historyTab.appendRow(newHRow);
                 hData.push(newHRow.map(String));
@@ -384,13 +384,13 @@ function bulkLogData(ss, owner, dataJson) {
             const isNewSession = (isNewFlag == 1 || lastEncRow == -1);
             if (isNewSession) {
                 const newERow = new Array(encTab.getLastColumn()).fill("");
-                newERow[eMap["summary_id"] - 1]   = summaryId;
-                newERow[eMap["first_seen"] - 1]   = now;
-                newERow[eMap["last_seen"] - 1]    = now;
-                newERow[eMap["dist"] - 1]         = dist;
-                newERow[eMap["sim_name"] - 1]     = simName;
-                newERow[eMap["sim_pos"] - 1]      = simPos;
-                newERow[eMap["parcel_name"] - 1]  = "";
+                newERow[eMap["summary_id"] - 1] = summaryId;
+                newERow[eMap["first_seen"] - 1] = now;
+                newERow[eMap["last_seen"] - 1] = now;
+                newERow[eMap["dist"] - 1] = dist;
+                newERow[eMap["sim_name"] - 1] = simName;
+                newERow[eMap["sim_pos"] - 1] = simPos;
+                newERow[eMap["parcel_name"] - 1] = "";
                 encTab.appendRow(newERow);
                 eData.push(newERow);
             } else {
@@ -442,7 +442,7 @@ function updateSettings(ss, uuid, scanFreq) {
             break;
         }
     }
-    
+
     if (updated) return jsonResponse({ status: "success", message: "Settings Updated!" });
     return jsonResponse({ status: "error", message: "User not found for update." });
 }
@@ -478,14 +478,14 @@ function toggleContact(ss, ownerUuid, targetUuid, targetName) {
         lock.waitLock(15000);
         const conTab = ss.getSheetByName("Contacts") || ss.insertSheet("Contacts");
         syncDatabase(ss); // Ensure header is correct
-        
+
         const cMap = getHeaderMap(conTab);
         const cData = conTab.getDataRange().getValues();
         let foundRow = -1;
 
         // Search for existing
         for (let i = 1; i < cData.length; i++) {
-            if (cData[i][cMap["owner_uuid"] - 1] == ownerUuid && 
+            if (cData[i][cMap["owner_uuid"] - 1] == ownerUuid &&
                 cData[i][cMap["contact_uuid"] - 1] == targetUuid) {
                 foundRow = i + 1;
                 break;

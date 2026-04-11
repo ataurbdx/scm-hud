@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCM HUD</title>
+    <!-- <link rel="stylesheet" href="assets/style.css"> -->
+
+    <style>
+        /* ===== STRUCTURE CSS (your original, kept) ===== */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p {
+            margin: 0;
+        }
+
+        .hud-container {
+            transform: scaleY(1.9);
+        }
+
+        .hud-scale {
+            zoom: 3;
+            margin-top: 80.8px;
+        }
+
+        .hud-content {
+            height: 179.7px;
+            overflow: hidden;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Make each page its own Flexbox Workspace when visible */
+        .spa-page {
+            display: none;
+            flex: 1;
+            min-height: 0;
+            /* CRITICAL for nested flexbox bounds */
+            width: 100%;
+            flex-direction: column;
+        }
+
+        .spa-page.active {
+            display: flex;
+        }
+
+        .spa-page header {
+            background: green;
+            position: relative;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .spa-page footer {
+            background: green;
+            position: relative;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .spa-page main {
+            background: red;
+            flex: 1;
+            min-height: 0;
+            /* CRITICAL for internal scrolling */
+            overflow-y: auto;
+        }
+    </style>
+
+    <!-- page css start  -->
+    <style>
+        /* === GLOBAL THEME TOKENS === */
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --text-primary: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #06b6d4;
+            --accent-glow: rgba(6, 182, 212, 0.6);
+            --font-main: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: var(--text-primary);
+        }
+
+        /* === PRELOADER PAGE DESIGN === */
+        #page-preloader main {
+            background: radial-gradient(circle at center, var(--bg-panel) 0%, var(--bg-dark) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* High-tech animated ring */
+        .loader-ring {
+            width: 40px;
+            height: 40px;
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .loader-ring::before,
+        .loader-ring::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        .loader-ring::before {
+            width: 100%;
+            height: 100%;
+            border: 2px solid transparent;
+            border-top-color: var(--accent-cyan);
+            border-right-color: var(--accent-cyan);
+            animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+            filter: drop-shadow(0 0 5px var(--accent-glow));
+        }
+
+        .loader-ring::after {
+            width: 24px;
+            height: 24px;
+            border: 2px solid transparent;
+            border-bottom-color: #38bdf8;
+            border-left-color: #38bdf8;
+            top: 8px;
+            left: 8px;
+            animation: spin-reverse 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes spin-reverse {
+            100% {
+                transform: rotate(-360deg);
+            }
+        }
+
+        /* Typography */
+        .preloader-title {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            animation: pulse-glow 1.5s ease-in-out infinite;
+        }
+
+        .preloader-subtitle {
+            font-size: 9px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                text-shadow: 0 0 2px transparent;
+                opacity: 1;
+            }
+
+            50% {
+                text-shadow: 0 0 8px var(--accent-glow);
+                opacity: 0.7;
+            }
+        }
+
+        /* === SETUP PAGE DESIGN === */
+        #page-setup header {
+            background: rgba(15, 23, 42, 0.95);
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-align: center;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(6, 182, 212, 0.3);
+            text-shadow: 0 0 5px rgba(6, 182, 212, 0.5);
+        }
+
+        #page-setup main {
+            background: var(--bg-panel);
+            color: var(--text-primary);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .setup-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+            color: #ef4444;
+            text-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+        }
+
+        .setup-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #f8fafc;
+            margin-bottom: 4px;
+        }
+
+        .setup-steps {
+            font-size: 9px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            text-align: left;
+            margin-top: 8px;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 6px 10px;
+            border-radius: 4px;
+            border-left: 2px solid var(--accent-cyan);
+            width: 90%;
+        }
+
+        .setup-steps ol {
+            margin: 0;
+            padding-left: 14px;
+        }
+
+        .setup-steps li {
+            margin-bottom: 2px;
+        }
+
+        #page-setup footer {
+            background: #0f172a;
+            padding: 8px 10px;
+            border-top: 1px solid rgba(6, 182, 212, 0.2);
+            display: flex;
+            gap: 6px;
+        }
+
+        .form-input {
+            flex: 1;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 4px;
+            color: var(--text-primary);
+            padding: 4px 8px;
+            font-size: 10px;
+            outline: none;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 5px var(--accent-glow);
+        }
+
+        .form-button {
+            background: transparent;
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 4px;
+            padding: 0 12px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 5px rgba(6, 182, 212, 0.2) inset;
+        }
+
+        .form-button:hover {
+            background: var(--accent-cyan);
+            color: #0f172a;
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- new hud design start  -->
+    <div class="hud-root">
+        <div class="hud-container">
+            <div class="hud-scale">
+                <div class="hud-content">
+
+                    <!-- PAGE 1: PRELOADER (Notice: No Header or Footer!) -->
+                    <div id="page-preloader" class="spa-page">
+                        <main>
+                            <div class="loader-ring"></div>
+                            <div class="preloader-title">Connecting</div>
+                            <div class="preloader-subtitle">Syncing SCM Data</div>
+                        </main>
+                    </div>
+
+                    <!-- PAGE 2: DATABASE SETUP (Notice: Has a Header and Footer) -->
+                    <div id="page-setup" class="spa-page active">
+                        <header>System Alert</header>
+                        <main>
+                            <div class="setup-icon">⚠️</div>
+                            <div class="setup-title">Database Not Found</div>
+                            <div class="setup-steps">
+                                <ol>
+                                    <li>Open SCM Google Sheet</li>
+                                    <li>Click Extensions > Apps Script</li>
+                                    <li>Deploy as Web App & Paste URL below</li>
+                                </ol>
+                            </div>
+                        </main>
+                        <footer>
+                            <input type="text" class="form-input" placeholder="https://script.google.com/...">
+                            <button class="form-button">Connect</button>
+                        </footer>
+                    </div>
+
+                    <!-- PAGE 3: RADAR / MAIN UI (Notice: Has Both Header AND Footer!) -->
+                    <div id="page-radar" class="spa-page">
+                        <header>Radar Menu</header>
+                        <main style="padding: 10px; background: #fff;">
+                            <h3 style="margin-bottom: 5px;">Nearby Avatars</h3>
+                            <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.9em;">
+                                <li style="padding: 5px; border-bottom: 1px solid #ccc;">Waiting for radar ping...</li>
+                            </ul>
+                        </main>
+                        <footer>Footer Menu / Icons</footer>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Example logic for switching SPA pages
+        // You can attach these functions to your actual LSL Linkset messages later.
+    </script>
+    <!-- new hud design end  -->
+</body>
+
+</html>
