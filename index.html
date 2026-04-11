@@ -113,6 +113,21 @@
             letter-spacing: 0.2px;
         }
 
+        /* Custom Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-cyan);
+            border-radius: 10px;
+            box-shadow: 0 0 5px var(--accent-glow);
+        }
+
         /* === TRIPLE-SWITCH LOGIC (CSS ONLY) === */
         /* Hide all dynamic blocks by default */
         .header-content,
