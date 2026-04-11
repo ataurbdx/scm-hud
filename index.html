@@ -91,15 +91,15 @@
             --bg-dark: #0f172a;
             --bg-panel: #1e293b;
             --bg-glass: rgba(30, 41, 59, 0.7);
-            
+
             --text-primary: #f8fafc;
             --text-muted: #94a3b8;
             --text-dim: #64748b;
-            
+
             --accent-cyan: #06b6d4;
             --accent-glow: rgba(6, 182, 212, 0.4);
             --accent-red: #ef4444;
-            
+
             --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             --blur: 8px;
         }
@@ -115,9 +115,11 @@
 
         /* === TRIPLE-SWITCH LOGIC (CSS ONLY) === */
         /* Hide all dynamic blocks by default */
-        .header-content, .main-content, .footer-content { 
-            display: none !important; 
-            width: 100%; 
+        .header-content,
+        .main-content,
+        .footer-content {
+            display: none !important;
+            width: 100%;
         }
 
         /* Show active blocks based on parent class */
@@ -125,8 +127,8 @@
         .tab-people .people-only,
         .tab-places .places-only,
         .tab-groups .groups-only,
-        .tab-system .system-only { 
-            display: flex !important; 
+        .tab-system .system-only {
+            display: flex !important;
         }
 
         /* === COMPONENT STYLING === */
@@ -141,8 +143,10 @@
         .main-tabs {
             display: flex;
             justify-content: space-between;
-            padding: 4px 8px; /* Padding moved here */
-            border-bottom: 1px solid rgba(255,255,255,0.1); /* Main divider */
+            padding: 4px 8px;
+            /* Padding moved here */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            /* Main divider */
         }
 
         .tab-btn {
@@ -155,9 +159,12 @@
             padding: 2px 4px;
         }
 
-        .tab-btn:hover { color: var(--text-primary); }
-        .tab-btn.active { 
-            color: var(--accent-cyan); 
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-cyan);
             text-shadow: 0 0 5px var(--accent-glow);
         }
 
@@ -167,8 +174,10 @@
             text-transform: uppercase;
             align-items: center;
             justify-content: space-between;
-            padding: 4px 8px; /* Padding inside the content */
-            border-bottom: 1px solid rgba(255,255,255,0.05); /* Content divider */
+            padding: 4px 8px;
+            /* Padding inside the content */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            /* Content divider */
         }
 
         .page-main {
@@ -193,13 +202,13 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         /* List Styling */
         .list-item {
             background: var(--bg-glass);
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 4px;
             padding: 6px;
             margin-bottom: 4px;
@@ -209,8 +218,16 @@
             backdrop-filter: blur(var(--blur));
         }
 
-        .item-name { font-size: 11px; font-weight: 600; color: var(--text-primary); }
-        .item-meta { font-size: 8px; color: var(--text-muted); }
+        .item-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .item-meta {
+            font-size: 8px;
+            color: var(--text-muted);
+        }
 
         .sync-btn {
             background: transparent;
@@ -222,8 +239,11 @@
             cursor: pointer;
             text-transform: uppercase;
         }
-        
-        .sync-btn:hover { background: var(--accent-cyan); color: white; }
+
+        .sync-btn:hover {
+            background: var(--accent-cyan);
+            color: white;
+        }
 
         /* === PRELOADER & SETUP UI (KEPT) === */
         #page-preloader main {
@@ -233,21 +253,98 @@
             align-items: center;
             justify-content: center;
         }
-        .loader-ring { width: 40px; height: 40px; position: relative; margin-bottom: 15px; }
+
+        .loader-ring {
+            width: 40px;
+            height: 40px;
+            position: relative;
+            margin-bottom: 15px;
+        }
+
         .loader-ring::before {
-            content: ''; position: absolute; width: 100%; height: 100%; border: 2px solid transparent;
-            border-top-color: var(--accent-cyan); border-right-color: var(--accent-cyan);
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid transparent;
+            border-top-color: var(--accent-cyan);
+            border-right-color: var(--accent-cyan);
             animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
         }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .preloader-title { font-size: 14px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--text-primary); }
-        .preloader-subtitle { font-size: 9px; color: var(--text-muted); text-transform: uppercase; }
 
-        #page-setup header { background: rgba(15, 23, 42, 0.95); color: var(--accent-cyan); text-transform: uppercase; font-size: 11px; font-weight: bold; text-align: center; padding: 6px 0; border-bottom: 1px solid rgba(6, 182, 212, 0.3); }
-        #page-setup main { background: var(--bg-panel); color: var(--text-primary); padding: 10px; display: flex; flex-direction: column; align-items: center; }
-        .setup-steps { font-size: 9px; color: var(--text-muted); line-height: 1.4; background: rgba(0, 0, 0, 0.25); padding: 6px 10px; border-radius: 4px; border-left: 2px solid var(--accent-cyan); width: 90%; }
-        .form-input { flex: 1; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 4px; color: var(--text-primary); padding: 4px 8px; font-size: 10px; outline: none; }
-        .form-button { background: transparent; color: var(--accent-cyan); border: 1px solid var(--accent-cyan); border-radius: 4px; padding: 0 12px; font-size: 10px; font-weight: bold; text-transform: uppercase; cursor: pointer; }
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .preloader-title {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-primary);
+        }
+
+        .preloader-subtitle {
+            font-size: 9px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        #page-setup header {
+            background: rgba(15, 23, 42, 0.95);
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(6, 182, 212, 0.3);
+        }
+
+        #page-setup main {
+            background: var(--bg-panel);
+            color: var(--text-primary);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .setup-steps {
+            font-size: 9px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 6px 10px;
+            border-radius: 4px;
+            border-left: 2px solid var(--accent-cyan);
+            width: 90%;
+        }
+
+        .form-input {
+            flex: 1;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 4px;
+            color: var(--text-primary);
+            padding: 4px 8px;
+            font-size: 10px;
+            outline: none;
+        }
+
+        .form-button {
+            background: transparent;
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 4px;
+            padding: 0 12px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -290,7 +387,7 @@
 
                     <!-- PAGE 3: Content / MAIN UI (Triple-Switcher) -->
                     <div id="page-content" class="spa-page active tab-radar">
-                        
+
                         <header class="page-header">
                             <!-- Global Tab Bar in Header -->
                             <div class="main-tabs">
@@ -308,7 +405,8 @@
                             </div>
                             <div class="header-content people-only">
                                 <span>Avatar Registry</span>
-                                <input type="text" placeholder="Search..." style="background:transparent; border:none; border-bottom:1px solid #333; color:white; font-size:8px;">
+                                <input type="text" placeholder="Search..."
+                                    style="background:transparent; border:none; border-bottom:1px solid #333; color:white; font-size:8px;">
                             </div>
                             <!-- ... other headers here ... -->
                         </header>
@@ -329,12 +427,110 @@
 
                             <!-- Tab Content: People -->
                             <div class="main-content people-only">
-                                <div id="people-list">Wait for sync...
-
-                                    p
+                                <div id="people-list">
+                                    <p>
+                                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Iusto, fugit. Id,
+                                        tempore. Hic dolore voluptate nam aut dolor laboriosam voluptatibus. Alias
+                                        itaque earum, reiciendis tempore aperiam ducimus nemo voluptatem ratione, unde
+                                        dolor, officiis provident a excepturi. Odit maiores, asperiores quis voluptatum
+                                        eveniet inventore animi atque quam ipsum possimus molestias. Culpa modi
+                                        recusandae cum voluptas laboriosam, veniam pariatur odit quas suscipit commodi
+                                        excepturi rem! Id fuga, dolorum possimus sunt tenetur at dolores minima
+                                        exercitationem hic nam porro. Enim, repellendus. Aliquam ab quibusdam
+                                        repellendus commodi eaque, explicabo praesentium error quaerat incidunt iure
+                                        vitae ipsam quae. Error quibusdam, possimus dolores quas id qui provident
+                                        repellendus, ut voluptate saepe porro ipsum obcaecati incidunt eius facere iure?
+                                        Nesciunt voluptatem cum fugit velit ab. Aliquid repellat soluta nemo quae at,
+                                        harum sequi velit nisi, illo blanditiis cupiditate sapiente error voluptatibus
+                                        eius! Dignissimos impedit facilis ea nostrum ut harum, quis hic est quae tempore
+                                        labore itaque neque debitis sint adipisci nobis nemo odio asperiores libero
+                                        earum, pariatur quas. Nam neque rem ratione. Facere, eveniet. Voluptate quod
+                                        similique delectus optio nobis nihil dolores, fuga qui nemo itaque! Repellat,
+                                        perspiciatis minus possimus expedita libero voluptatum dolore dolorem magni iste
+                                        eligendi qui necessitatibus in ad suscipit quaerat non cupiditate blanditiis
+                                        quam accusantium, illo repellendus eius iusto. Cupiditate sequi quaerat
+                                        perspiciatis reprehenderit fugit. Officiis consequatur non vero esse ut eum
+                                        excepturi fugiat provident ullam iste assumenda aliquid tempora doloremque eius,
+                                        libero amet aspernatur ab modi architecto, temporibus est explicabo pariatur
+                                        voluptas quis? Aut laborum sed corporis est veritatis cupiditate laboriosam
+                                        magni deleniti omnis minus. Inventore molestiae quam error tenetur eum doloribus
+                                        eos consequuntur ut nostrum commodi repellendus repellat magnam a suscipit,
+                                        assumenda nesciunt. Veniam, facere facilis, sit quibusdam ipsum laborum maxime
+                                        cupiditate cumque atque ducimus quidem animi? Perferendis, ullam. Repudiandae
+                                        nam voluptates provident necessitatibus voluptas suscipit incidunt! Dignissimos
+                                        vitae nihil amet repellat necessitatibus et, sit ex modi a velit delectus
+                                        laborum numquam iusto quisquam porro pariatur, sequi inventore accusantium ipsa
+                                        hic doloribus quasi totam minus. Ullam reprehenderit, soluta rem molestiae
+                                        recusandae porro? Molestiae explicabo sed labore architecto cum, officiis a
+                                        veniam in, cumque voluptatem vero. Cum, quisquam expedita ratione ad saepe
+                                        consequuntur quidem architecto in impedit possimus minima cumque eligendi error
+                                        obcaecati odio inventore. Nobis atque quia repellendus laudantium facere, cum
+                                        iste sapiente, obcaecati voluptatem recusandae quisquam impedit omnis neque
+                                        magni mollitia labore hic adipisci deleniti ea deserunt quod! Soluta iure sunt
+                                        dolores quidem harum totam quos tempora, autem deserunt molestiae praesentium
+                                        quo repellendus corporis consequatur nemo inventore impedit dolor cumque
+                                        perspiciatis quas. Molestiae fuga recusandae iusto repudiandae voluptatem, porro
+                                        quaerat quia iste, veniam laborum, quisquam ut eveniet sequi consequuntur
+                                        facilis! Asperiores, dicta sequi beatae iste placeat explicabo molestiae
+                                        deserunt illum sit cumque quod ipsum porro quas unde laboriosam reiciendis
+                                        doloribus maxime magnam. Illo sint voluptatum tenetur magni possimus doloribus
+                                        totam quae animi reprehenderit repudiandae impedit nam eos ipsa molestias,
+                                        fugiat at soluta dignissimos tempore vel. Alias minus, mollitia placeat aliquid
+                                        consequatur consequuntur optio porro eligendi aperiam numquam corrupti saepe
+                                        quasi ipsam expedita? Iure non fugit minima reiciendis quisquam repellat
+                                        necessitatibus, similique, minus saepe officia numquam cumque voluptates quasi
+                                        voluptatem, repudiandae unde obcaecati enim iste rerum quam dolorem! Quae
+                                        aperiam illum culpa non quo animi error quas corrupti. Consequatur sunt
+                                        recusandae, deserunt ex sapiente vero aspernatur expedita optio exercitationem
+                                        quibusdam voluptate aut quaerat vel corporis laudantium saepe! Ab ipsam minima,
+                                        a fugit veniam quam doloremque, inventore iure quisquam, perspiciatis vel
+                                        accusamus. Tempore quos fugit ex, amet exercitationem, cum ducimus, dicta labore
+                                        nisi velit voluptas architecto nemo distinctio. Minima alias tenetur
+                                        exercitationem obcaecati voluptates earum quia quod. Tempore alias enim facilis
+                                        molestiae animi sequi ut iure repudiandae, quasi sapiente vitae esse non labore
+                                        placeat natus? Excepturi culpa cum nam molestiae facere eum ipsam blanditiis
+                                        fugiat, earum pariatur iure fugit quas deleniti inventore. Porro, illum debitis
+                                        consequuntur eum laborum laboriosam iste repellat soluta iure ratione dolores
+                                        eaque nostrum atque aliquid repudiandae quasi iusto necessitatibus ipsum quaerat
+                                        asperiores natus rem ea placeat. Voluptate facilis qui incidunt deserunt ipsam
+                                        earum labore debitis, a exercitationem ex eius, unde officiis dolorem aperiam
+                                        dignissimos ipsa est quisquam recusandae nostrum nesciunt modi. Amet sequi nam
+                                        maiores natus aperiam ut, dolorum accusantium aut deserunt illo eius ipsa
+                                        obcaecati nisi numquam nobis repellendus! Unde quisquam non nostrum dignissimos
+                                        nulla sit similique aliquam! Ex, illum, perferendis architecto exercitationem
+                                        excepturi molestias sed recusandae magni dicta nesciunt ratione eum maiores odio
+                                        eligendi voluptates optio eius quae! Possimus animi dignissimos neque
+                                        laudantium? Veritatis fugiat eveniet nulla, totam nobis omnis pariatur possimus
+                                        quibusdam exercitationem? Velit sequi iste at culpa eum, repellat dolorum hic
+                                        ipsum odit quasi officiis similique repudiandae nobis. Iste deleniti tempore
+                                        accusantium, quasi commodi perspiciatis accusamus dicta assumenda suscipit
+                                        ducimus autem, placeat voluptate, modi quos minima temporibus. Fugit debitis
+                                        error corrupti praesentium optio! Autem natus minus enim fugiat odio voluptate
+                                        recusandae. Eos est aliquid aperiam eaque sed praesentium dolorum voluptatum,
+                                        unde hic, enim, ea iste aliquam a! Nostrum libero nulla pariatur sequi,
+                                        reprehenderit maiores quos? Illo velit autem at necessitatibus deleniti quidem
+                                        vel error a nemo! Perferendis temporibus, commodi voluptate blanditiis sunt
+                                        optio fugit qui libero odit magnam quam nobis at sit officia fugiat amet ipsa
+                                        soluta aliquam ea voluptatibus consequatur earum voluptates error accusamus!
+                                        Ipsa expedita consequatur ad itaque blanditiis quam ducimus dolorum magnam quia
+                                        animi modi eveniet est id corrupti, inventore aspernatur placeat natus harum
+                                        facere obcaecati ab, necessitatibus culpa dicta? Ipsum eligendi dignissimos
+                                        veritatis! Quae voluptatum omnis provident consectetur veniam at iusto ad nam
+                                        eligendi consequuntur laborum sit, in distinctio totam dolorum quam ducimus quis
+                                        quaerat aliquid exercitationem officiis, deleniti libero? Explicabo doloremque
+                                        ducimus maxime odit molestiae hic repellendus perspiciatis sint optio, deserunt
+                                        placeat dignissimos, dolorum voluptate at eligendi asperiores. Tempora doloribus
+                                        repellendus sunt deleniti quam in modi suscipit! Aut amet sapiente aliquid
+                                        numquam hic, labore molestiae sequi temporibus quam pariatur enim id dicta quo
+                                        obcaecati corrupti tempora qui, accusamus nemo dolor. Praesentium molestiae
+                                        nihil minima nulla natus! Necessitatibus ad minima ut molestiae natus fuga
+                                        debitis cum expedita provident laborum tenetur officiis tempore accusantium
+                                        voluptates, ratione est illum eos exercitationem vel hic at. Ab fugit fugiat
+                                        accusamus cumque veniam aspernatur laboriosam!
+                                    </p>
                                 </div>
                             </div>
-                            
+
                             <!-- ... other main contents here ... -->
                         </main>
 
@@ -358,17 +554,17 @@
     <script>
         function switchTab(tab) {
             const container = document.getElementById('page-content');
-            
+
             // 1. Remove all existing tab classes
             container.classList.remove('tab-radar', 'tab-people', 'tab-places', 'tab-groups', 'tab-system');
-            
+
             // 2. Add the new active tab class
             container.classList.add('tab-' + tab);
-            
+
             // 3. Update button active states
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('btn-' + tab).classList.add('active');
-            
+
             console.log('Switched to:', tab);
         }
 
