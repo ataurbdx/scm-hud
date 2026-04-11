@@ -115,23 +115,25 @@
 
         /* === TRIPLE-SWITCH LOGIC (CSS ONLY) === */
         /* Hide all dynamic blocks by default */
-        .header-content, .main-content, .footer-content { display: none; width: 100%; }
+        .header-content, .main-content, .footer-content { 
+            display: none !important; 
+            width: 100%; 
+        }
 
         /* Show active blocks based on parent class */
-        .tab-radar .radar-only { display: flex; }
-        .tab-people .people-only { display: flex; }
-        .tab-places .places-only { display: flex; }
-        .tab-groups .groups-only { display: flex; }
-        .tab-system .system-only { display: flex; }
+        .tab-radar .radar-only,
+        .tab-people .people-only,
+        .tab-places .places-only,
+        .tab-groups .groups-only,
+        .tab-system .system-only { 
+            display: flex !important; 
+        }
 
         /* === COMPONENT STYLING === */
         .page-header {
             background: var(--bg-dark) !important;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
             color: var(--accent-cyan);
-            padding: 2px 8px;
-            font-size: 10px;
-            font-weight: bold;
+            /* Removed global padding and border */
             display: flex;
             flex-direction: column;
         }
@@ -139,9 +141,8 @@
         .main-tabs {
             display: flex;
             justify-content: space-between;
-            padding-bottom: 4px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            margin-bottom: 2px;
+            padding: 4px 8px; /* Padding moved here */
+            border-bottom: 1px solid rgba(255,255,255,0.1); /* Main divider */
         }
 
         .tab-btn {
@@ -166,7 +167,8 @@
             text-transform: uppercase;
             align-items: center;
             justify-content: space-between;
-            padding-top: 2px;
+            padding: 4px 8px; /* Padding inside the content */
+            border-bottom: 1px solid rgba(255,255,255,0.05); /* Content divider */
         }
 
         .page-main {
@@ -180,13 +182,18 @@
 
         .page-footer {
             background: var(--bg-dark) !important;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            /* Removed global padding and border */
+            width: 100%;
+        }
+
+        .footer-content {
             padding: 4px 8px;
             font-size: 8px;
             color: var(--text-muted);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
 
         /* List Styling */
