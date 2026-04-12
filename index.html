@@ -1137,9 +1137,13 @@
                             <div id="modal-body" class="modal-body">
                                 <!-- Content will be printed here dynamically -->
                             </div>
-                            <div class="modal-footer" id="modal-footer-content"
-                                style="justify-content:space-between; display:none;">
-                                <!-- Footer icons will be printed here if needed -->
+                            <div class="modal-footer" id="modal-footer" style="justify-content:space-between;">
+                                <button class="btn-hud btn-icon" style="color:var(--accent-red);" onclick="closeModal()" title="Cancel">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </button>
+                                <button class="btn-hud btn-icon" onclick="showModal('System', '<div style=\'text-align:center; padding:20px;\'>Changes Saved</div>', false)" title="Save">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1171,32 +1175,16 @@
             console.log('Viewing details for:', userId);
             const template = document.getElementById('tpl-person-details');
             const content = template.content.cloneNode(true);
-
-            const footerHtml = `
-                <button class="btn-hud btn-icon" style="color:var(--accent-red);" onclick="closeModal()" title="Cancel">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-                <button class="btn-hud btn-icon" onclick="showModal('System', '<div style=\'text-align:center; padding:20px;\'>Changes Saved</div>')" title="Save">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </button>
-            `;
-
             const tempDiv = document.createElement('div');
             tempDiv.appendChild(content);
-            showModal('Show Detail', tempDiv.innerHTML, footerHtml);
+            showModal('Show Detail', tempDiv.innerHTML, true);
         }
 
         // Modal Controller
-        function showModal(title, body, footer = '') {
+        function showModal(title, body, showFooter = true) {
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-body').innerHTML = body;
-            const footerEl = document.getElementById('modal-footer-content');
-            if (footer) {
-                footerEl.innerHTML = footer;
-                footerEl.style.display = 'flex';
-            } else {
-                footerEl.style.display = 'none';
-            }
+            document.getElementById('modal-footer').style.display = showFooter ? 'flex' : 'none';
             document.getElementById('hud-modal').style.display = 'flex';
         }
 
@@ -1205,9 +1193,6 @@
             modal.style.display = 'none';
             document.getElementById('modal-title').innerText = 'System Message';
             document.getElementById('modal-body').innerHTML = '';
-            const fEl = document.getElementById('modal-footer-content');
-            fEl.innerHTML = '';
-            fEl.style.display = 'none';
         }
 
         function triggerModalBump(e) {
