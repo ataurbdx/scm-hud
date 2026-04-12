@@ -251,12 +251,10 @@
             min-width: 0;
         }
 
-        /* Sidebar Area (Responsive) */
+        /* Sidebar Area (Responsive with safe minimum) */
         .sidebar {
-            width: 20%;
-            /* Proportional width */
-            min-width: 80px;
-            /* Safety minimum */
+            width: 25%; /* Proportional scaling */
+            min-width: 140px; /* Ensures labels and buttons are always readable */
             background: rgba(0, 0, 0, 0.2);
             border-left: 1px solid rgba(255, 255, 255, 0.05);
             display: flex;
