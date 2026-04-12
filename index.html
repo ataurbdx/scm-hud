@@ -441,9 +441,9 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 4px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             width: 100%;
+            padding-bottom: 10px;
         }
 
         .details-avatar {
@@ -463,7 +463,6 @@
             grid-template-columns: 1fr 1fr;
             gap: 6px;
             width: 100%;
-            padding: 6px 4px;
         }
 
         .details-stat {
@@ -713,6 +712,24 @@
                 opacity: 1;
                 transform: scale(1);
             }
+        }
+
+        @keyframes modalBump {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.03);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .modal-bump {
+            animation: modalBump 0.15s ease-out;
         }
 
         .modal-header {
@@ -1054,80 +1071,41 @@
                             <!-- ... other tabs follow same pattern ... -->
                         </main>
                     </div>
-
-                    <!-- PAGE 4: PERSON DETAILS (SHOW PAGE) -->
-                    <div id="page-person-details" class="spa-page">
-                        <header class="page-header"
-                            style="height:32px; padding: 0 4px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                            <div
-                                style="display:flex; justify-content:space-between; align-items:center; width:100%; height:100%; color:var(--text-primary);">
-                                <span
-                                    style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:var(--accent-cyan);">Show
-                                    Detail</span>
-                                <button class="btn-hud btn-icon" onclick="closeDetails()" title="Back">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                        stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;">
-                                        <polyline points="15 18 9 12 15 6"></polyline>
-                                    </svg>
-                                </button>
+                    <!-- Profile Template (Hidden from view, used by Modal) -->
+                    <template id="tpl-person-details">
+                        <div class="details-header">
+                            <div class="details-avatar">👤</div>
+                            <div>
+                                <div class="setup-title" style="margin:0; color:var(--text-primary);">Milf Shefali</div>
+                                <div class="item-meta">milf.shefali <div class="meta-dot"></div> <span
+                                        style="color:var(--accent-cyan)">Online</span></div>
                             </div>
-                        </header>
-                        <main class="page-main"
-                            style="flex-direction:column; align-items:flex-start; justify-content:flex-start;">
-                            <div class="details-header">
-                                <div class="details-avatar">👤</div>
-                                <div>
-                                    <div class="setup-title" style="margin:0; color:var(--text-primary);">Milf Shefali
-                                    </div>
-                                    <div class="item-meta">milf.shefali <div class="meta-dot"></div> <span
-                                            style="color:var(--accent-cyan)">Online</span></div>
-                                </div>
+                        </div>
+                        <div class="details-grid" style="margin-top: 10px;">
+                            <div class="details-stat">
+                                <div class="stat-label">First Seen</div>
+                                <div class="stat-value">Oct 12, 2023</div>
                             </div>
-                            <div class="details-grid">
-                                <div class="details-stat">
-                                    <div class="stat-label">First Seen</div>
-                                    <div class="stat-value">Oct 12, 2023</div>
-                                </div>
-                                <div class="details-stat">
-                                    <div class="stat-label">Last Seen</div>
-                                    <div class="stat-value">Just Now</div>
-                                </div>
-                                <div class="details-stat">
-                                    <div class="stat-label">Total Visits</div>
-                                    <div class="stat-value">128 Times</div>
-                                </div>
-                                <div class="details-stat">
-                                    <div class="stat-label">Main Sim</div>
-                                    <div class="stat-value">Ahern</div>
-                                </div>
+                            <div class="details-stat">
+                                <div class="stat-label">Last Seen</div>
+                                <div class="stat-value">Just Now</div>
                             </div>
-                            <div style="padding: 0 4px; width:100%; margin-top:8px;">
-                                <div class="stat-label">Private Notes</div>
-                                <textarea class="form-input-tiny"
-                                    style="height:40px; margin-top:4px; padding:4px 6px; font-size:9px;"
-                                    placeholder="Add private notes..."></textarea>
+                            <div class="details-stat">
+                                <div class="stat-label">Total Visits</div>
+                                <div class="stat-value">128 Times</div>
                             </div>
-                        </main>
-                        <footer class="sidebar-footer"
-                            style="background:rgba(0,0,0,0.4); border-top: 1px solid rgba(255,255,255,0.05); padding: 4px; display:flex; justify-content:space-between; flex-direction:row;">
-                            <button class="btn-hud btn-icon" style="color:var(--accent-red);" onclick="closeDetails()"
-                                title="Cancel">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                    stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;">
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                </svg>
-                            </button>
-                            <button class="btn-hud btn-icon" style="color:var(--accent-cyan);"
-                                onclick="showModal('System', 'Changes Saved')" title="Save">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                    stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                            </button>
-                        </footer>
-                    </div>
-
+                            <div class="details-stat">
+                                <div class="stat-label">Main Sim</div>
+                                <div class="stat-value">Ahern</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <div class="stat-label">Private Notes</div>
+                            <textarea class="form-input-tiny"
+                                style="height:40px; margin-top:4px; padding:4px 6px; font-size:9px;"
+                                placeholder="Add private notes..."></textarea>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -1136,10 +1114,6 @@
     <script>
         function switchTab(tab) {
             const container = document.getElementById('page-content');
-            const detailPage = document.getElementById('page-person-details');
-
-            // 1. Hide detail page if switching to a main tab
-            detailPage.style.display = 'none';
             container.style.display = 'flex';
 
             // 2. Remove all existing tab classes
@@ -1158,31 +1132,39 @@
 
         function viewDetails(userId) {
             console.log('Viewing details for:', userId);
-            const container = document.getElementById('page-content');
-            const detailPage = document.getElementById('page-person-details');
+            const template = document.getElementById('tpl-person-details');
+            const content = template.content.cloneNode(true);
 
-            // Hide main content, show detail page
-            container.style.display = 'none';
-            detailPage.style.display = 'flex';
+            // Build temporary div to get HTML string
+            const tempDiv = document.createElement('div');
+            tempDiv.appendChild(content);
+
+            showModal('Show Detail', tempDiv.innerHTML);
         }
 
         // Modal Controller
-        function showModal(title, content) {
+        function showModal(title, body) {
             document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-body').innerHTML = content;
+            document.getElementById('modal-body').innerHTML = body;
             document.getElementById('hud-modal').style.display = 'flex';
         }
 
         function closeModal() {
-            document.getElementById('hud-modal').style.display = 'none';
+            const modal = document.getElementById('hud-modal');
+            modal.style.display = 'none';
+            // Clean up content as requested
+            document.getElementById('modal-title').innerText = 'System Message';
+            document.getElementById('modal-body').innerHTML = '';
         }
 
-        function closeDetails() {
-            const container = document.getElementById('page-content');
-            const detailPage = document.getElementById('page-person-details');
-
-            detailPage.style.display = 'none';
-            container.style.display = 'flex';
+        function triggerModalBump(e) {
+            // Only bump if clicking the backdrop, not the card content
+            if (e.target.id === 'hud-modal') {
+                const card = e.target.querySelector('.modal-card');
+                card.classList.remove('modal-bump');
+                void card.offsetWidth; // Trigger reflow
+                card.classList.add('modal-bump');
+            }
         }
 
         // Initial state: Find which button is marked 'active' in HTML and load it
@@ -1195,7 +1177,7 @@
         });
     </script>
     <!-- THEMED MODAL Root -->
-    <div id="hud-modal" class="modal-overlay" onclick="if(event.target === this) closeModal()">
+    <div id="hud-modal" class="modal-overlay" onclick="triggerModalBump(event)">
         <div class="modal-card">
             <div class="modal-header">
                 <span id="modal-title" class="modal-title">System Message</span>
