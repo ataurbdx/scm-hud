@@ -7,34 +7,52 @@
     <title>SCM HUD</title>
     <!-- <link rel="stylesheet" href="assets/style.css"> -->
 
-    <style id="hud-structure">
-        /* ============================================================
-           SECTION 1: COMMON BASE STYLES (Used in both environments)
-           ============================================================ */
+    <style>
+        /* ===== STRUCTURE CSS (your original, kept) ===== */
+
         * {
             box-sizing: border-box;
         }
 
-        html, body {
+        html,
+        body {
             margin: 0;
             padding: 0;
         }
 
-        h1, h2, h3, h4, h5, h6, p {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p {
             margin: 0;
         }
 
+        .hud-container {
+            transform: scaleY(1.9);
+        }
+
+        .hud-scale {
+            zoom: 3;
+            margin-top: 80.8px;
+        }
+
         .hud-content {
+            height: 179.7px;
             overflow: hidden;
+
             display: flex;
             flex-direction: column;
         }
 
-        /* SPA Page Logic */
+        /* Make each page its own Flexbox Workspace when visible */
         .spa-page {
             display: none;
             flex: 1;
             min-height: 0;
+            /* CRITICAL for nested flexbox bounds */
             width: 100%;
             flex-direction: column;
         }
@@ -43,61 +61,26 @@
             display: flex;
         }
 
+        .spa-page header {
+            background: green;
+            position: relative;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .spa-page footer {
+            background: green;
+            position: relative;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
         .spa-page main {
+            background: red;
             flex: 1;
             min-height: 0;
+            /* CRITICAL for internal scrolling */
             overflow-y: auto;
-        }
-
-        /* ============================================================
-           SECTION 2: BROWSER VIEWPORT (Safe 16:9 Desktop View)
-           ============================================================ */
-        .is-browser .hud-root {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: #020617;
-        }
-
-        .is-browser .hud-container {
-            width: 95vw;
-            max-width: 1024px;
-            /* 16:9 Aspect Ratio Calculation */
-            height: calc(min(95vw, 1024px) * 9 / 16);
-        }
-
-        /* Internal divs stretch to fill the 16:9 container in browser */
-        .is-browser .hud-scale,
-        .is-browser .hud-content {
-            height: 100%;
-            width: 100%;
-        }
-
-        .is-browser .hud-content {
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            background: var(--bg-dark);
-        }
-
-        /* ============================================================
-           SECTION 3: SECOND LIFE VIEWPORT (Corrected for HUD Stretch)
-           ============================================================ */
-        .is-sl .hud-container {
-            /* Counters the vertical stretching on the SL HUD prim */
-            transform: scaleY(1.9);
-        }
-
-        .is-sl .hud-scale {
-            /* Global zoom for high-resolution readability in SL */
-            zoom: 3;
-            margin-top: 80.8px;
-        }
-
-        .is-sl .hud-content {
-            /* The specific magic height needed for SL 1-unit prims */
-            height: 179.7px;
         }
     </style>
 
@@ -174,55 +157,30 @@
 
         .main-tabs {
             display: flex;
-            align-items: stretch;
-            padding: 0;
-            background: rgba(0, 0, 0, 0.4);
-            height: 32px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            justify-content: space-between;
+            padding: 4px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .tab-btn {
-            background: rgba(255, 255, 255, 0.03);
+            background: transparent;
             border: none;
-            color: var(--text-muted);
+            color: var(--text-dim);
+            font-size: 11px;
             cursor: pointer;
             transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-            height: 100%;
-            border-radius: 0;
-            /* Flush rectangular tabs */
-            margin: 0;
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .tab-btn:last-child {
-            border-right: none;
+            padding: 2px 4px;
+            text-transform: uppercase;
+            font-weight: 600;
         }
 
         .tab-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
             color: var(--text-primary);
         }
 
         .tab-btn.active {
-            background: var(--bg-panel);
             color: var(--accent-cyan);
-            z-index: 5;
-            box-shadow: inset 0 -2px 0 var(--accent-cyan);
-            /* Active indicator line at bottom */
-        }
-
-        .tab-btn svg {
-            width: 14px;
-            height: 14px;
-            filter: drop-shadow(0 0 2px rgba(6, 182, 212, 0.2));
-        }
-
-        .tab-btn.active svg {
-            filter: drop-shadow(0 0 5px var(--accent-glow));
+            text-shadow: 0 0 5px var(--accent-glow);
         }
 
         .page-main {
@@ -245,18 +203,14 @@
         /* List Area (Scrollable) */
         .list-area {
             flex: 1;
-            overflow-y: scroll;
-            /* Force scrollbar visibility */
+            overflow-y: scroll; /* Force scrollbar visibility */
             padding: 8px;
             min-width: 0;
         }
 
-        /* Sidebar Area (Responsive) */
+        /* Sidebar Area (Fixed) */
         .sidebar {
-            width: 20%;
-            /* Proportional width */
-            min-width: 80px;
-            /* Safety minimum */
+            width: 90px;
             background: rgba(0, 0, 0, 0.2);
             border-left: 1px solid rgba(255, 255, 255, 0.05);
             display: flex;
@@ -449,14 +403,6 @@
 </head>
 
 <body>
-    <script>
-        // Environment Detection
-        (function () {
-            const isSL = navigator.userAgent.includes("SecondLife");
-            document.body.classList.add(isSL ? 'is-sl' : 'is-browser');
-            console.log("Environment Detection:", isSL ? "Second Life" : "Browser");
-        })();
-    </script>
 
     <!-- new hud design start  -->
     <div class="hud-root">
@@ -499,55 +445,11 @@
                         <header class="page-header">
                             <!-- Global Category Tabs (Always Sticky) -->
                             <div class="main-tabs">
-                                <button class="tab-btn active" id="btn-radar" onclick="switchTab('radar')"
-                                    title="Radar / Near">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="12" cy="12" r="2" />
-                                        <path d="M12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7" />
-                                        <path d="M16.24 7.76c2.14 2.15 2.14 5.63 0 7.78" />
-                                        <path d="M12 2v2" />
-                                        <path d="M12 20v2" />
-                                        <path d="M22 12h-2" />
-                                        <path d="M4 12H2" />
-                                        <path d="m4.93 4.93 1.41 1.41" />
-                                        <path d="m17.66 17.66 1.41 1.41" />
-                                        <path d="m2 2 20 20" />
-                                    </svg>
-                                </button>
-                                <button class="tab-btn" id="btn-people" onclick="switchTab('people')"
-                                    title="People / Contacts">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                        <circle cx="9" cy="7" r="4" />
-                                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                    </svg>
-                                </button>
-                                <button class="tab-btn" id="btn-places" onclick="switchTab('places')"
-                                    title="Places / Landmark">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                                        <circle cx="12" cy="10" r="3" />
-                                    </svg>
-                                </button>
-                                <button class="tab-btn" id="btn-groups" onclick="switchTab('groups')" title="Groups">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                                    </svg>
-                                </button>
-                                <button class="tab-btn" id="btn-system" onclick="switchTab('system')"
-                                    title="System Settings">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <path
-                                            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-                                        <circle cx="12" cy="12" r="3" />
-                                    </svg>
-                                </button>
+                                <button class="tab-btn active" id="btn-radar" onclick="switchTab('radar')">Near</button>
+                                <button class="tab-btn" id="btn-people" onclick="switchTab('people')">People</button>
+                                <button class="tab-btn" id="btn-places" onclick="switchTab('places')">Places</button>
+                                <button class="tab-btn" id="btn-groups" onclick="switchTab('groups')">Groups</button>
+                                <button class="tab-btn" id="btn-system" onclick="switchTab('system')">System</button>
                             </div>
                         </header>
 
@@ -631,36 +533,6 @@
                                             </div>
                                         </div>
 
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
                                         <div class="list-item">
                                             <div class="item-info">
                                                 <div class="item-name">No Contacts Yet</div>
