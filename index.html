@@ -93,6 +93,10 @@
             width: 100%;
         }
 
+        .is-browser .hud-scale {
+            zoom: 2;
+        }
+
         .is-browser .hud-content {
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
@@ -309,41 +313,80 @@
             background: var(--bg-glass);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 4px;
-            padding: 6px;
+            padding: 6px 8px;
             margin-bottom: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            backdrop-filter: blur(var(--blur));
+            transition: 0.2s;
+        }
+
+        .list-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(6, 182, 212, 0.2);
+        }
+
+        .item-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            backdrop-filter: blur(var(--blur));
+            width: 100%;
         }
 
         .item-name {
             font-size: 10px;
             font-weight: 600;
             color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            border-radius: 3px;
+        }
+
+        .action-btn:hover {
+            color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .action-btn svg {
+            width: 12px;
+            height: 12px;
         }
 
         .item-meta {
             font-size: 8px;
-            color: var(--text-muted);
+            color: var(--text-dim);
+            display: flex;
+            gap: 8px;
+            align-items: center;
         }
 
-        .sync-btn {
-            background: transparent;
-            border: 1px solid var(--accent-cyan);
-            color: var(--accent-cyan);
-            border-radius: 3px;
-            padding: 2px;
-            font-size: 7px;
-            cursor: pointer;
-            text-transform: uppercase;
-            width: 100%;
-            text-align: center;
-        }
-
-        .sync-btn:hover {
-            background: var(--accent-cyan);
-            color: white;
+        .meta-dot {
+            width: 2px;
+            height: 2px;
+            background: var(--text-dim);
+            border-radius: 50%;
+            opacity: 0.5;
         }
 
         .form-input-tiny {
@@ -612,11 +655,27 @@
                                 <div class="list-area scrollable">
                                     <ul id="radar-list" style="list-style:none; padding:0; margin:0;">
                                         <li class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">Ataur Rahman</div>
-                                                <div class="item-meta">10m • Ahern</div>
+                                            <div class="item-row">
+                                                <div class="item-name">Ataur Rahman (ataurbdx)</div>
+                                                <div class="item-actions">
+                                                    <button class="action-btn" title="View Profile">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                                    </button>
+                                                    <button class="action-btn" title="Send IM">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                                                    </button>
+                                                    <button class="action-btn" title="Save Contact">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <button class="sync-btn" style="width:40px;">SAVE</button>
+                                            <div class="item-meta">
+                                                <span>10m</span>
+                                                <div class="meta-dot"></div>
+                                                <span>Ahern</span>
+                                                <div class="meta-dot"></div>
+                                                <span>2m ago</span>
+                                            </div>
                                         </li>
                                     </ul>
                                 </div>
@@ -638,88 +697,50 @@
                                 <div class="list-area scrollable">
                                     <div id="people-list">
                                         <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
+                                            <div class="item-row">
+                                                <div class="item-name">Hrodiy Khan (hridoy)</div>
+                                                <div class="item-actions">
+                                                    <button class="action-btn" title="View Profile">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                                    </button>
+                                                    <button class="action-btn" title="Send IM">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                                                    </button>
+                                                    <button class="action-btn" title="Track">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="item-meta">
+                                                <span>Offline</span>
+                                                <div class="meta-dot"></div>
+                                                <span>Ahern</span>
+                                                <div class="meta-dot"></div>
+                                                <span>Seen 5h ago</span>
                                             </div>
                                         </div>
 
                                         <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
+                                            <div class="item-row">
+                                                <div class="item-name">Milf Shefali (milf.shefali)</div>
+                                                <div class="item-actions">
+                                                    <button class="action-btn" title="View Profile">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                                    </button>
+                                                    <button class="action-btn" title="Send IM">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                                                    </button>
+                                                    <button class="action-btn" title="Track">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
-
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
-
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
-
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
-
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
-
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
-
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
-                                            </div>
-                                        </div>
-                                        <div class="list-item">
-                                            <div class="item-info">
-                                                <div class="item-name">No Contacts Yet</div>
-                                                <div class="item-meta">Use the sidebar to sync</div>
+                                            <div class="item-meta">
+                                                <span style="color:var(--accent-cyan)">Online</span>
+                                                <div class="meta-dot"></div>
+                                                <span>Morris</span>
+                                                <div class="meta-dot"></div>
+                                                <span>Just now</span>
                                             </div>
                                         </div>
                                     </div>

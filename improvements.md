@@ -53,6 +53,7 @@ Used ONLY to connect a HUD to the user's personal Google Sheet. No settings stor
 | `owner_uuid` | Your UUID | String | Who scanned them |
 | `avatar_id` | Their UUID | String (FK)| Links to global `avatars.avatar_id` |
 | `created_at` | Link Date | Datetime | When you first detected them |
+| `updated_at` | Link Date | Datetime | will sort based on it. on every scan will update it |
 
 
 ### `user_avatars` (Manual Friends List)
@@ -84,6 +85,7 @@ Used ONLY to connect a HUD to the user's personal Google Sheet. No settings stor
 | `owner_uuid` | Your UUID | String | Who visited |
 | `landmark_id` | Landmark ID | String (FK)| Links to global `landmarks.landmark_id` |
 | `created_at` | Link Date | Datetime | When you first visited |
+| `updated_at` | Link Date | Datetime | will sorrt based on this order |
 
 ### `user_landmarks` (Manual Saved Locations / Landmarks)
 *Strictly your manually saved locations. This is your personal "Landmarks" list.*
@@ -112,6 +114,7 @@ Used ONLY to connect a HUD to the user's personal Google Sheet. No settings stor
 | `owner_uuid` | Your UUID | String | |
 | `group_id` | Group UUID | String (FK)| Links to global `groups.group_id` |
 | `created_at` | Link Date | Datetime | |
+| `updated_at` | Link Date | Datetime | will sort bsed on this order |
 
 ### `user_groups` (Manual Group Tracking)
 *Groups you have manually joined or are tracking specifically.*
