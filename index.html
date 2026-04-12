@@ -440,8 +440,8 @@
         .details-header {
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 20px;
+            gap: 10px;
+            padding: 8px 4px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             width: 100%;
         }
@@ -461,14 +461,14 @@
         .details-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 6px;
             width: 100%;
-            padding: 15px;
+            padding: 6px 4px;
         }
 
         .details-stat {
             background: rgba(255, 255, 255, 0.03);
-            padding: 8px;
+            padding: 6px 8px;
             border-radius: 4px;
             border-left: 2px solid var(--accent-cyan);
         }
@@ -628,7 +628,7 @@
             border: 1px solid rgba(6, 182, 212, 0.4);
             color: var(--accent-cyan);
             font-size: 8px;
-            font-weight: 800;
+            font-weight: 500;
             letter-spacing: 0.5px;
             text-transform: uppercase;
             cursor: pointer;
@@ -663,6 +663,90 @@
         .btn-hud-setup {
             padding: 6px 15px;
             font-size: 9px;
+        }
+
+        /* Square Icon Buttons */
+        .btn-icon {
+            /* width: 24px;
+            height: 24px; */
+            padding: 0 !important;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* Modal System */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: var(--bg-panel);
+            border: 1px solid rgba(6, 182, 212, 0.4);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 10px rgba(6, 182, 212, 0.2);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-header {
+            padding: 6px 8px;
+            background: rgba(6, 182, 212, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            color: var(--accent-cyan);
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .modal-body {
+            padding: 8px;
+            font-size: 10px;
+            color: var(--text-primary);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 6px 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
         }
     </style>
 </head>
@@ -973,17 +1057,28 @@
 
                     <!-- PAGE 4: PERSON DETAILS (SHOW PAGE) -->
                     <div id="page-person-details" class="spa-page">
-                        <header
-                            style="display:flex; justify-content:space-between; align-items:center; padding: 0 15px;">
-                            <span>Show Detail</span>
-                            <button class="btn-hud" style="width:auto; padding: 2px 10px;"
-                                onclick="switchTab('people')">Back</button>
+                        <header class="page-header"
+                            style="height:32px; padding: 0 4px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; width:100%; height:100%; color:var(--text-primary);">
+                                <span
+                                    style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:var(--accent-cyan);">Show
+                                    Detail</span>
+                                <button class="btn-hud btn-icon" onclick="closeDetails()" title="Back">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;">
+                                        <polyline points="15 18 9 12 15 6"></polyline>
+                                    </svg>
+                                </button>
+                            </div>
                         </header>
-                        <main>
+                        <main class="page-main"
+                            style="flex-direction:column; align-items:flex-start; justify-content:flex-start;">
                             <div class="details-header">
                                 <div class="details-avatar">👤</div>
                                 <div>
-                                    <div class="setup-title" style="margin:0;">Milf Shefali</div>
+                                    <div class="setup-title" style="margin:0; color:var(--text-primary);">Milf Shefali
+                                    </div>
                                     <div class="item-meta">milf.shefali <div class="meta-dot"></div> <span
                                             style="color:var(--accent-cyan)">Online</span></div>
                                 </div>
@@ -1006,13 +1101,31 @@
                                     <div class="stat-value">Ahern</div>
                                 </div>
                             </div>
-                            <div style="padding: 0 15px; width:100%;">
+                            <div style="padding: 0 4px; width:100%; margin-top:8px;">
                                 <div class="stat-label">Private Notes</div>
                                 <textarea class="form-input-tiny"
-                                    style="height:40px; margin-top:5px; padding:5px; font-size:9px;"
+                                    style="height:40px; margin-top:4px; padding:4px 6px; font-size:9px;"
                                     placeholder="Add private notes..."></textarea>
                             </div>
                         </main>
+                        <footer class="sidebar-footer"
+                            style="background:rgba(0,0,0,0.4); border-top: 1px solid rgba(255,255,255,0.05); padding: 4px; display:flex; justify-content:space-between; flex-direction:row;">
+                            <button class="btn-hud btn-icon" style="color:var(--accent-red);" onclick="closeDetails()"
+                                title="Cancel">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                            <button class="btn-hud btn-icon" style="color:var(--accent-cyan);"
+                                onclick="showModal('System', 'Changes Saved')" title="Save">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </button>
+                        </footer>
                     </div>
 
                 </div>
@@ -1053,6 +1166,25 @@
             detailPage.style.display = 'flex';
         }
 
+        // Modal Controller
+        function showModal(title, content) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerHTML = content;
+            document.getElementById('hud-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('hud-modal').style.display = 'none';
+        }
+
+        function closeDetails() {
+            const container = document.getElementById('page-content');
+            const detailPage = document.getElementById('page-person-details');
+
+            detailPage.style.display = 'none';
+            container.style.display = 'flex';
+        }
+
         // Initial state: Find which button is marked 'active' in HTML and load it
         window.addEventListener('DOMContentLoaded', () => {
             const activeBtn = document.querySelector('.tab-btn.active');
@@ -1062,7 +1194,39 @@
             }
         });
     </script>
-    <!-- new hud design end  -->
+    <!-- THEMED MODAL Root -->
+    <div id="hud-modal" class="modal-overlay" onclick="if(event.target === this) closeModal()">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span id="modal-title" class="modal-title">System Message</span>
+                <button class="btn-hud btn-icon" onclick="closeModal()" title="Close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round" style="width:14px; height:14px;">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div id="modal-body" class="modal-body">
+                <!-- Content will be printed here dynamically -->
+            </div>
+            <div class="modal-footer" style="justify-content:space-between;">
+                <button class="btn-hud btn-icon" style="color:var(--accent-red);" onclick="closeModal()" title="Cancel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round" style="width:14px; height:14px;">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <button class="btn-hud btn-icon" onclick="closeModal()" title="Save">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round" style="width:14px; height:14px;">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
