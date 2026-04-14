@@ -646,15 +646,31 @@
             backdrop-filter: blur(24px);
 
             /* Limit height and add internal scroll if list is long */
-            max-height: 63px;
+            max-height: 85px;
             overflow-y: auto;
 
             /* Add a shadow to make it "pop" from the background */
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             animation: modalFadeIn 0.2s ease-out;
+        }
 
-            transform-origin: top;
-            transition: opacity 0.2s, transform 0.2s;
+        /* Custom Scrollbar for Dropdowns */
+        .select-options::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .select-options::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .select-options::-webkit-scrollbar-thumb {
+            background: var(--accent-cyan);
+            border-radius: 10px;
+        }
+
+        transform-origin: top;
+        transition: opacity 0.2s,
+        transform 0.2s;
         }
 
         /* Search input inside dropdown */
@@ -1688,6 +1704,143 @@
                                     </div>
                                 </aside>
                             </div>
+
+                            <!-- SYSTEM / SETTINGS TAB -->
+                            <div class="main-content system-only">
+                                <div class="content-body scrollable">
+                                    <div id="system-content" class="content-data">
+                                        <!-- Overview Page -->
+                                        <div class="system-page active" id="system-overview">
+                                            <div class="setup-title">System Overview</div>
+                                            <div class="details-grid" style="margin-top: 15px;">
+                                                <div class="details-stat">
+                                                    <div class="stat-label">Connection</div>
+                                                    <div class="stat-value" style="color:var(--accent-cyan)">SCM Master
+                                                        Cloud</div>
+                                                </div>
+                                                <div class="details-stat">
+                                                    <div class="stat-label">Version</div>
+                                                    <div class="stat-value" style="color:var(--accent-cyan)">Radar
+                                                        Engine v1.4</div>
+                                                </div>
+                                                <div class="details-stat">
+                                                    <div class="stat-label">Environment</div>
+                                                    <div class="stat-value">Second Life (Desktop)</div>
+                                                </div>
+                                                <div class="details-stat">
+                                                    <div class="stat-label">Last Sync</div>
+                                                    <div class="stat-value">Just Now</div>
+                                                </div>
+                                            </div>
+                                            <div
+                                                style="margin-top: 20px; padding: 10px; border: 1px solid var(--border-subtle); border-radius: 4px; background: rgba(255,255,255,0.02);">
+                                                <div class="stat-label" style="margin-bottom: 5px;">Storage Usage</div>
+                                                <div
+                                                    style="width:100%; height:4px; background:var(--bg-panel); border-radius:10px;">
+                                                    <div
+                                                        style="width:45%; height:100%; background:var(--accent-cyan); border-radius:10px;">
+                                                    </div>
+                                                </div>
+                                                <div class="item-meta" style="margin-top:5px;">4.5MB / 10MB Used</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- General Settings Page -->
+                                        <div class="system-page" id="system-general" style="display:none;">
+                                            <div class="setup-title">General Settings</div>
+                                            <div class="content-data" style="margin-top: 15px;">
+                                                <div class="form-wraper">
+                                                    <label class="stat-label">HUD Name</label>
+                                                    <input type="text" class="form-input-tiny" value="SCM HUD Elite">
+                                                </div>
+                                                <div class="form-wraper">
+                                                    <label class="stat-label">Transparency (%)</label>
+                                                    <input type="range" min="0" max="100" value="15"
+                                                        style="width:100%;">
+                                                </div>
+                                                <div class="form-wraper">
+                                                    <label class="stat-label">Auto-Sync Toggle</label>
+                                                    <div style="display:flex; gap:10px; margin-top:5px;">
+                                                        <button class="btn-hud" style="flex:1;">Enabled</button>
+                                                        <button class="btn-hud btn-hud-outline"
+                                                            style="flex:1;">Disabled</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Categories Management Page -->
+                                        <div class="system-page" id="system-categories" style="display:none;">
+                                            <div class="setup-title">Manage Categories</div>
+                                            <div class="content-data" style="margin-top: 15px;">
+                                                <div class="form-wraper" style="display:flex; gap:5px;">
+                                                    <input type="text" class="form-input-tiny"
+                                                        placeholder="New Category Name..." style="flex:1;">
+                                                    <button class="btn-hud">Add</button>
+                                                </div>
+                                                <div id="category-management-list" style="margin-top: 10px;">
+                                                    <div class="list-item" style="padding: 6px 10px;">
+                                                        <div class="item-row" style="justify-content:space-between;">
+                                                            <span>Admin</span>
+                                                            <span
+                                                                style="color:var(--accent-red); font-size:10px; cursor:pointer;">Delete</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="list-item" style="padding: 6px 10px;">
+                                                        <div class="item-row" style="justify-content:space-between;">
+                                                            <span>Friend</span>
+                                                            <span
+                                                                style="color:var(--accent-red); font-size:10px; cursor:pointer;">Delete</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Tags Management Page -->
+                                        <div class="system-page" id="system-tags" style="display:none;">
+                                            <div class="setup-title">Manage Tags</div>
+                                            <div class="content-data" style="margin-top: 15px;">
+                                                <div class="form-wraper" style="display:flex; gap:5px;">
+                                                    <input type="text" class="form-input-tiny"
+                                                        placeholder="New Tag Name..." style="flex:1;">
+                                                    <button class="btn-hud">Add</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <aside class="sidebar">
+                                    <div class="sidebar-header">
+                                        <div class="custom-select" id="systemPageSelect">
+                                            <div class="select-trigger"
+                                                onclick="toggleCustomSelect('systemPageSelect')">Overview</div>
+                                            <div class="select-options">
+                                                <div class="select-option selected" data-value="overview"
+                                                    onclick="selectOption('systemPageSelect', this)">Overview</div>
+                                                <div class="select-option" data-value="general"
+                                                    onclick="selectOption('systemPageSelect', this)">General Settings
+                                                </div>
+                                                <div class="select-option" data-value="categories"
+                                                    onclick="selectOption('systemPageSelect', this)">Categories</div>
+                                                <div class="select-option" data-value="tags"
+                                                    onclick="selectOption('systemPageSelect', this)">Tags</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="sidebar-body">
+                                        <div
+                                            style="font-size:9px; color:var(--text-muted); padding:10px; line-height:1.4;">
+                                            Configure your HUD environment, themes, and personal database mappings here.
+                                            These changes are synced to your Cloud Sheet.
+                                        </div>
+                                    </div>
+                                    <div class="sidebar-footer">
+                                        <button class="btn-hud" style="width:100%;" onclick="saveSettings()">Save
+                                            Changes</button>
+                                    </div>
+                                </aside>
+                            </div>
                         </main>
                     </div>
                     <!-- Profile Template (Hidden from view, used by Modal) -->
@@ -1883,10 +2036,25 @@
                 optionEl.classList.add('selected');
                 trigger.innerText = optionEl.innerText;
                 select.classList.remove('active');
+
+                // Special handling for Settings Sub-navigation
+                if (selectId === 'systemPageSelect') {
+                    const pageVal = optionEl.getAttribute('data-value');
+                    const allPages = document.querySelectorAll('.system-page');
+                    allPages.forEach(p => p.style.display = 'none');
+                    const activePage = document.getElementById('system-' + pageVal);
+                    if (activePage) activePage.style.display = 'block';
+                }
             }
 
             // Trigger actual data change
             console.log('Selection updated in:', selectId);
+        }
+
+        function saveSettings() {
+            // Placeholder for backend saving logic
+            showModal('System Message', '<div style="text-align:center; padding:10px;">Configurations saved to Cloud Sheet!</div>', false);
+            setTimeout(closeModal, 2000);
         }
 
         function updateMultiSelectDisplay(selectId) {
