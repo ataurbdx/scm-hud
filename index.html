@@ -535,7 +535,7 @@
             border: 1px solid var(--border-glass);
             color: var(--text-primary);
             font-size: 10px;
-            padding: 2px 4px;
+            padding: 4px;
             border-radius: 4px;
             cursor: pointer;
             backdrop-filter: blur(var(--blur));
@@ -543,15 +543,68 @@
             position: sticky;
             top: 0;
             z-index: 1;
-            /* REDUCE THIS from 10 to 1 or 2 */
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            align-items: flex-start;
+        }
+
+        .select-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding-bottom: 2px;
+            width: 100%;
+            padding-right: 14px;
+            /* Only the label row needs room for the arrow */
+            box-sizing: border-box;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .select-tag-container {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            width: 100%;
+        }
+
+        .select-tag {
+            background: var(--accent-cyan);
+            color: var(--text-primary);
+            border-radius: 3px;
+            padding: 0 4px;
+            font-size: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            box-shadow: 0 0 5px rgba(6, 182, 212, 0.1);
+            padding-bottom: 2px;
+        }
+
+        .select-tag-remove {
+            color: var(--accent-red);
+            font-size: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .select-tag-remove:hover {
+            color: #fff;
+            text-shadow: 0 0 8px var(--accent-red);
         }
 
         .select-trigger::after {
             content: '';
             position: absolute;
-            right: 4px;
-            top: 50%;
+            right: 6px;
+            top: 10px;
+            /* Locked to the first row (label line) */
             transform: translateY(-50%);
             width: 8px;
             height: 8px;
@@ -1574,17 +1627,7 @@
                 // Toggle selection
                 optionEl.classList.toggle('selected');
 
-                // Collect selected values
-                const selectedOptions = Array.from(select.querySelectorAll('.select-option.selected'));
-                const values = selectedOptions.map(opt => opt.innerText);
-
-                if (values.length === 0) {
-                    trigger.innerText = defaultLabel;
-                } else if (values.length === 1) {
-                    trigger.innerText = values[0];
-                } else {
-                    trigger.innerText = `${defaultLabel} (${values.length})`;
-                }
+                updateMultiSelectDisplay(selectId);
 
                 // Do NOT close menu for multi-select
             } else {
@@ -1598,6 +1641,46 @@
 
             // Trigger actual data change
             console.log('Selection updated in:', selectId);
+        }
+
+        function updateMultiSelectDisplay(selectId) {
+            const select = document.getElementById(selectId);
+            const trigger = select.querySelector('.select-trigger');
+            const labelText = select.getAttribute('data-label') || 'Select...';
+
+            const selectedOptions = Array.from(select.querySelectorAll('.select-option.selected'));
+
+            // Always keep the label on the first line
+            let html = `<div class="select-label">${labelText}</div>`;
+
+            if (selectedOptions.length > 0) {
+                html += `<div class="select-tag-container">`;
+                selectedOptions.forEach(opt => {
+                    const cleanText = opt.textContent.replace('✓', '').trim();
+                    const val = opt.getAttribute('data-value');
+                    html += `
+                        <div class="select-tag">
+                            <span>${cleanText}</span>
+                            <span class="select-tag-remove" onclick="removeOption('${selectId}', '${val}', event)">×</span>
+                        </div>`;
+                });
+                html += `</div>`;
+            }
+
+            trigger.innerHTML = html;
+        }
+
+        function removeOption(selectId, optionValue, event) {
+            event.stopPropagation(); // Prevent opening/closing the dropdown
+            const select = document.getElementById(selectId);
+            const options = select.querySelectorAll('.select-option');
+            options.forEach(opt => {
+                if (opt.getAttribute('data-value') === optionValue) {
+                    opt.classList.remove('selected');
+                }
+            });
+            updateMultiSelectDisplay(selectId);
+            console.log('Removed option:', optionValue, 'from:', selectId);
         }
 
         // Initial state: Find which button is marked 'active' in HTML and load it
