@@ -1558,7 +1558,7 @@
             options.forEach(opt => {
                 const text = opt.textContent.toLowerCase();
                 const matched = searchTerms.every(term => text.includes(term));
-                // opt.style.display = matched ? 'block' : 'none';
+                opt.style.display = matched ? 'block' : 'none';
             });
         }
 
