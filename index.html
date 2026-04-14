@@ -77,7 +77,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: #020617;
+            background: var(--bg-deep);
         }
 
         .is-browser .hud-container {
@@ -100,9 +100,9 @@
         }
 
         .is-browser .hud-content {
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-glass);
             border-radius: 8px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: var(--shadow-main);
             background: var(--bg-dark);
         }
 
@@ -130,18 +130,34 @@
     <style>
         /* === GLOBAL THEME TOKENS === */
         :root {
+            /* Core Backgrounds */
             --bg-dark: #0f172a;
+            --bg-deep: #020617;
             --bg-panel: #1e293b;
             --bg-glass: rgba(30, 41, 59, 0.7);
+            --bg-subtle: rgba(0, 0, 0, 0.2);
+            --bg-overlay: rgba(0, 0, 0, 0.4);
 
+            /* Typography */
             --text-primary: #f8fafc;
             --text-muted: #94a3b8;
             --text-dim: #64748b;
 
+            /* Accents */
             --accent-cyan: #06b6d4;
             --accent-glow: rgba(6, 182, 212, 0.4);
             --accent-red: #ef4444;
 
+            /* Borders & Shadows */
+            --border-subtle: rgba(255, 255, 255, 0.05);
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --shadow-main: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+
+            /* Specialized Theme colors */
+            --accent-cyan-subtle: rgba(6, 182, 212, 0.1);
+            --bg-modal-overlay: rgba(0, 0, 0, 0.7);
+
+            /* Effects */
             --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             --blur: 8px;
         }
@@ -167,7 +183,7 @@
         ::-webkit-scrollbar-thumb {
             background: var(--accent-cyan);
             border-radius: 10px;
-            border: 1px solid rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--bg-subtle);
         }
 
         /* === TRIPLE-SWITCH LOGIC (CSS ONLY) === */
@@ -228,8 +244,8 @@
         .sidebar {
             width: 25%;
             min-width: 120px;
-            background: rgba(0, 0, 0, 0.2);
-            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--bg-subtle);
+            border-left: 1px solid var(--border-subtle);
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
@@ -237,22 +253,30 @@
         }
 
         .sidebar-header {
-            padding: 6px 4px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-weight: bold;
+            position: relative;
+            z-index: 10;
+            padding: 4px;
+            border-bottom: 1px solid var(--border-subtle);
+            background: var(--bg-dark);
+            flex-shrink: 0;
         }
 
-        .sidebar-main {
+        .sidebar-body {
             flex: 1;
             padding: 4px;
-            overflow-y: auto;
+            /* Extra right padding for scrollbar */
+            overflow-y: scroll;
+            /* Force it to prevent jump */
+            scrollbar-gutter: stable;
+            /* Modern fix for jumpy scrollbars */
         }
 
         .sidebar-footer {
-            padding: 6px 4px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            z-index: 10;
+            padding: 4px;
+            border-top: 1px solid var(--border-subtle);
+            background: var(--bg-dark);
             display: flex;
             flex-direction: column;
             gap: 4px;
@@ -265,13 +289,14 @@
             display: flex;
             align-items: stretch;
             padding: 0;
-            background: rgba(0, 0, 0, 0.4);
+            background: var(--bg-overlay);
             height: 32px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid var(--border-subtle);
         }
 
         .tab-btn {
             background: rgba(255, 255, 255, 0.03);
+            /* Kept as raw for ultra-subtle variance */
             border: none;
             color: var(--text-muted);
             cursor: pointer;
@@ -284,7 +309,7 @@
             border-radius: 0;
             /* Flush rectangular tabs */
             margin: 0;
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            border-right: 1px solid var(--border-subtle);
         }
 
         .tab-btn:last-child {
@@ -317,7 +342,7 @@
         /* List Styling */
         .list-item {
             background: var(--bg-glass);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
             border-radius: 4px;
             padding: 4px;
             margin: 4px 0;
@@ -357,8 +382,8 @@
         .item-actions {
             display: flex;
             align-items: center;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-glass);
             border-radius: 4px;
             overflow: hidden;
             flex-shrink: 0;
@@ -368,7 +393,7 @@
         .action-btn {
             background: transparent;
             border: none;
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: 1px solid var(--border-glass);
             color: var(--text-muted);
             cursor: pointer;
             padding: 2px 4px;
@@ -409,7 +434,7 @@
         }
 
         /* Sidebar Filter Dropdown */
-        .sidebar-filter {
+        .form-wraper {
             margin: 4px 0;
         }
 
@@ -425,12 +450,18 @@
         .custom-select {
             position: relative;
             width: 100%;
+            z-index: 1;
+        }
+
+        .custom-select.active {
+            z-index: 101;
+            /* Higher than other filters and dropdown options */
         }
 
         .select-trigger {
             width: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--bg-overlay);
+            border: 1px solid var(--border-glass);
             color: var(--text-primary);
             font-size: 8px;
             padding: 4px;
@@ -507,6 +538,15 @@
         .select-option.selected {
             background: rgba(6, 182, 212, 0.1);
             color: var(--accent-cyan);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .select-option.selected::after {
+            content: '✓';
+            font-size: 8px;
+            font-weight: bold;
         }
 
         /* Details Page Styling */
@@ -514,7 +554,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid var(--border-subtle);
             width: 100%;
             padding-bottom: 10px;
         }
@@ -543,7 +583,7 @@
             background: var(--bg-glass);
             padding: 4px 6px;
             border-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
             backdrop-filter: blur(var(--blur));
         }
 
@@ -563,8 +603,8 @@
 
         .form-input-tiny {
             width: 100%;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-subtle);
             color: white;
             font-size: 8px;
             padding: 4px;
@@ -635,7 +675,7 @@
         }
 
         #page-setup header {
-            background: rgba(0, 0, 0, 0.4);
+            background: var(--bg-overlay);
             color: var(--accent-cyan);
             text-transform: uppercase;
             font-size: 10px;
@@ -643,7 +683,7 @@
             letter-spacing: 2px;
             text-align: center;
             padding: 10px 0;
-            border-bottom: 1px solid rgba(6, 182, 212, 0.2);
+            border-bottom: 1px solid var(--accent-glow);
         }
 
         #page-setup main {
@@ -664,8 +704,9 @@
         }
 
         .setup-steps {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--bg-overlay);
+            /* Replaced with overlay for consistent depth */
+            border: 1px solid var(--border-subtle);
             border-left: 3px solid var(--accent-cyan);
             padding: 15px 20px;
             border-radius: 6px;
@@ -682,17 +723,19 @@
         }
 
         #page-setup footer {
-            background: rgba(0, 0, 0, 0.5);
+            background: var(--shadow-main);
+            /* Deep dark background */
             padding: 12px 20px;
             display: flex;
             gap: 10px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid var(--border-subtle);
         }
 
         .form-input {
             flex: 1;
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--bg-deep);
+            /* Using browser-deep bg for contrast */
+            border: 1px solid var(--border-glass);
             border-radius: 4px;
             color: var(--text-primary);
             padding: 8px 12px;
@@ -708,10 +751,11 @@
 
         /* Neo-Cyber Button System */
         .btn-hud {
-            background: rgba(6, 182, 212, 0.1);
-            border: 1px solid rgba(6, 182, 212, 0.4);
+            background: var(--accent-cyan-subtle);
+            border: 1px solid var(--accent-glow);
             color: var(--accent-cyan);
             font-size: 8px;
+            /* padding: 4px; */
             font-weight: 500;
             letter-spacing: 0.5px;
             text-transform: uppercase;
@@ -765,7 +809,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: var(--bg-modal-overlay);
             backdrop-filter: blur(10px);
             display: none;
             justify-content: center;
@@ -817,8 +861,8 @@
 
         .modal-header {
             padding: 6px 8px;
-            background: rgba(6, 182, 212, 0.1);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--accent-cyan-subtle);
+            border-bottom: 1px solid var(--border-subtle);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -852,8 +896,8 @@
 
         .modal-footer {
             padding: 6px 8px;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--bg-subtle);
+            border-top: 1px solid var(--border-subtle);
             display: flex;
             justify-content: flex-end;
             gap: 8px;
@@ -1021,7 +1065,7 @@
                                 </div>
                                 <aside class="sidebar">
                                     <div class="sidebar-header">Radar</div>
-                                    <div class="sidebar-main">
+                                    <div class="sidebar-body">
                                         <div style="color:var(--accent-cyan); margin-bottom:4px;">Scanning...</div>
                                         <div style="opacity:0.6;">Range: 20m</div>
                                     </div>
@@ -1136,22 +1180,58 @@
                                     </div>
                                 </div>
                                 <aside class="sidebar">
-                                    <!-- <div class="sidebar-header">Source Filter</div> -->
-                                    <div class="sidebar-main content-data">
-                                        <div class="sidebar-filter">
-                                            <div class="custom-select" id="dataSourceSelect">
+                                    <div class="sidebar-header">
+                                        <div class="custom-select" id="dataSourceSelect">
+                                            <div class="select-trigger"
+                                                onclick="toggleCustomSelect('dataSourceSelect')">Contacts</div>
+                                            <div class="select-options">
+                                                <div class="select-option selected" data-value="contacts"
+                                                    onclick="selectOption('dataSourceSelect', this)">Contacts</div>
+                                                <div class="select-option" data-value="people"
+                                                    onclick="selectOption('dataSourceSelect', this)">People</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="sidebar-body content-data">
+                                        <div class="form-wraper">
+                                            <div class="custom-select" id="categorySelect" data-multi="true"
+                                                data-label="Categories">
                                                 <div class="select-trigger"
-                                                    onclick="toggleCustomSelect('dataSourceSelect')">Contacts</div>
+                                                    onclick="toggleCustomSelect('categorySelect')">Categories</div>
                                                 <div class="select-options">
-                                                    <div class="select-option selected" data-value="contacts"
-                                                        onclick="selectOption('dataSourceSelect', this)">Contacts</div>
-                                                    <div class="select-option" data-value="people"
-                                                        onclick="selectOption('dataSourceSelect', this)">Peoples</div>
+                                                    <div class="select-option" data-value="admin"
+                                                        onclick="selectOption('categorySelect', this)">Admin</div>
+                                                    <div class="select-option" data-value="safe"
+                                                        onclick="selectOption('categorySelect', this)">Safe Zone</div>
+                                                    <div class="select-option" data-value="suspected"
+                                                        onclick="selectOption('categorySelect', this)">Suspected</div>
+                                                    <div class="select-option" data-value="guest"
+                                                        onclick="selectOption('categorySelect', this)">Guest</div>
+                                                    <div class="select-option" data-value="1"
+                                                        onclick="selectOption('categorySelect', this)">1</div>
+                                                    <div class="select-option" data-value="2"
+                                                        onclick="selectOption('categorySelect', this)">2</div>
+                                                    <div class="select-option" data-value="3"
+                                                        onclick="selectOption('categorySelect', this)">3</div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="sidebar-filter">
-                                            <!-- <label class="filter-label">Search</label> -->
+                                        <div class="form-wraper">
+                                            <div class="custom-select" id="tagSelect" data-multi="true"
+                                                data-label="Tags">
+                                                <div class="select-trigger" onclick="toggleCustomSelect('tagSelect')">
+                                                    Tags</div>
+                                                <div class="select-options">
+                                                    <div class="select-option" data-value="friend"
+                                                        onclick="selectOption('tagSelect', this)">Friend</div>
+                                                    <div class="select-option" data-value="vip"
+                                                        onclick="selectOption('tagSelect', this)">VIP</div>
+                                                    <div class="select-option" data-value="block"
+                                                        onclick="selectOption('tagSelect', this)">Blocked</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-wraper">
                                             <input type="text" class="form-input-tiny" placeholder="Find avatar...">
                                         </div>
                                     </div>
@@ -1312,18 +1392,37 @@
         function selectOption(selectId, optionEl) {
             const select = document.getElementById(selectId);
             const trigger = select.querySelector('.select-trigger');
-            const options = select.querySelectorAll('.select-option');
+            const isMulti = select.getAttribute('data-multi') === 'true';
+            const defaultLabel = select.getAttribute('data-label') || 'Select...';
 
-            // Update UI
-            options.forEach(opt => opt.classList.remove('selected'));
-            optionEl.classList.add('selected');
-            trigger.innerText = optionEl.innerText;
+            if (isMulti) {
+                // Toggle selection
+                optionEl.classList.toggle('selected');
 
-            // Close menu
-            select.classList.remove('active');
+                // Collect selected values
+                const selectedOptions = Array.from(select.querySelectorAll('.select-option.selected'));
+                const values = selectedOptions.map(opt => opt.innerText);
+
+                if (values.length === 0) {
+                    trigger.innerText = defaultLabel;
+                } else if (values.length === 1) {
+                    trigger.innerText = values[0];
+                } else {
+                    trigger.innerText = `${defaultLabel} (${values.length})`;
+                }
+
+                // Do NOT close menu for multi-select
+            } else {
+                // Single select behavior
+                const options = select.querySelectorAll('.select-option');
+                options.forEach(opt => opt.classList.remove('selected'));
+                optionEl.classList.add('selected');
+                trigger.innerText = optionEl.innerText;
+                select.classList.remove('active');
+            }
 
             // Trigger actual data change
-            console.log('Selected data source:', optionEl.getAttribute('data-value'));
+            console.log('Selection updated in:', selectId);
         }
 
         // Initial state: Find which button is marked 'active' in HTML and load it
